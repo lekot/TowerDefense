@@ -6,11 +6,13 @@ import java.util.ArrayList;
 import java.util.Date;
 
 import org.andengine.engine.camera.Camera;
+import org.andengine.engine.handler.IUpdateHandler;
 import org.andengine.engine.options.EngineOptions;
 import org.andengine.engine.options.ScreenOrientation;
 import org.andengine.engine.options.resolutionpolicy.RatioResolutionPolicy;
 import org.andengine.entity.scene.Scene;
 import org.andengine.entity.sprite.Sprite;
+import org.andengine.opengl.font.IFont;
 import org.andengine.opengl.texture.ITexture;
 import org.andengine.opengl.texture.bitmap.BitmapTexture;
 import org.andengine.opengl.texture.region.ITextureRegion;
@@ -28,8 +30,10 @@ public class TowerDefense extends SimpleBaseGameActivity {
 	// constants
 	public static final int STARTING_COINS = 200;
 	public static final int MAX_HEALTH = 5;
-	public static final int ENEMY_TEST = 0;
 	public static final int WAVE_DELAY_NORMAL = 10000;
+	public static final int ENEMY_TEST = 0;
+	public static final int TOWER_EMPTY = 0;
+	public static final int TOWER_TEST = 1;
 	
 	// camera variables
 	private static int CAMERA_WIDTH = 800;
@@ -47,11 +51,14 @@ public class TowerDefense extends SimpleBaseGameActivity {
 	public static ITextureRegion enemyTextureRegion;
 	public static ITextureRegion spawnPointTextureRegion;
 	public static ITextureRegion wayPointTextureRegion;
+	public static ITextureRegion basePointTextureRegion;
+	public static ITextureRegion towerTextureRegion;
+	public static ITextureRegion roundTextureRegion;
 	
 	// scene
 	public static Scene scene;
 	
-	// waypoints
+	// way points
 	public static WayPoint mWayPoint1;
 	public static WayPoint mWayPoint2;
 	public static WayPoint mWayPoint3;
@@ -67,8 +74,21 @@ public class TowerDefense extends SimpleBaseGameActivity {
 	// wave sets
 	public static ArrayList<ArrayList<Integer>> mWaveSet1;
 	
-	// spawnpoints
+	// spawn points
 	public static SpawnPoint mSpawnPoint1;
+	
+	// base points
+	public static BasePoint mBasePoint1;
+	public static BasePoint mBasePoint2;
+	public static BasePoint mBasePoint3;
+	public static BasePoint mBasePoint4;
+	public static BasePoint mBasePoint5;
+	public static BasePoint mBasePoint6;
+	public static BasePoint mBasePoint7;
+	public static BasePoint mBasePoint8;
+	
+	// enemies
+	public static ArrayList<Enemy> currentEnemies = new ArrayList<Enemy>();
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -129,19 +149,42 @@ public class TowerDefense extends SimpleBaseGameActivity {
 		            return getAssets().open("gfx/waypoint.png");
 		        }
 		    });
+		    ITexture basePointTexture = new BitmapTexture(this.getTextureManager(), new IInputStreamOpener() {
+		        @Override
+		        public InputStream open() throws IOException {
+		            return getAssets().open("gfx/basepoint.png");
+		        }
+		    });
+		    ITexture towerTexture = new BitmapTexture(this.getTextureManager(), new IInputStreamOpener() {
+		        @Override
+		        public InputStream open() throws IOException {
+		            return getAssets().open("gfx/tower.png");
+		        }
+		    });
+		    ITexture roundTexture = new BitmapTexture(this.getTextureManager(), new IInputStreamOpener() {
+		        @Override
+		        public InputStream open() throws IOException {
+		            return getAssets().open("gfx/round.png");
+		        }
+		    });
 		    
 		    // load bitmap textures into VRAM
 		    backgroundTexture.load();
 		    enemyTexture.load();
 		    spawnPointTexture.load();
 		    wayPointTexture.load();
-		    
+		    basePointTexture.load();
+		    towerTexture.load();
+		    roundTexture.load();
 		    
 		    // set up texture regions
 		    this.mBackgroundTextureRegion = TextureRegionFactory.extractFromTexture(backgroundTexture);
 		    TowerDefense.enemyTextureRegion = TextureRegionFactory.extractFromTexture(enemyTexture);
 		    TowerDefense.spawnPointTextureRegion = TextureRegionFactory.extractFromTexture(spawnPointTexture);
 		    TowerDefense.wayPointTextureRegion = TextureRegionFactory.extractFromTexture(wayPointTexture);
+		    TowerDefense.basePointTextureRegion = TextureRegionFactory.extractFromTexture(basePointTexture);
+		    TowerDefense.towerTextureRegion = TextureRegionFactory.extractFromTexture(towerTexture);
+		    TowerDefense.roundTextureRegion = TextureRegionFactory.extractFromTexture(roundTexture);
 		    
 		} catch (IOException e) {
 		    Debug.e(e);
@@ -158,11 +201,11 @@ public class TowerDefense extends SimpleBaseGameActivity {
 		scene.attachChild(backgroundSprite);
 		
 		// instantiate and place WayPoints
-		mWayPoint1 = new WayPoint(665, 105, getVertexBufferObjectManager());
-		mWayPoint2 = new WayPoint(622, 252, getVertexBufferObjectManager());
-		mWayPoint3 = new WayPoint(134, 246, getVertexBufferObjectManager());
-		mWayPoint4 = new WayPoint(140, 390, getVertexBufferObjectManager());
-		mWayPoint5 = new WayPoint(770, 378, getVertexBufferObjectManager());
+		mWayPoint1 = new WayPoint(665, 95, getVertexBufferObjectManager());
+		mWayPoint2 = new WayPoint(618, 248, getVertexBufferObjectManager());
+		mWayPoint3 = new WayPoint(122, 240, getVertexBufferObjectManager());
+		mWayPoint4 = new WayPoint(134, 386, getVertexBufferObjectManager());
+		mWayPoint5 = new WayPoint(800, 376, getVertexBufferObjectManager());
 		scene.attachChild(mWayPoint1);
 		scene.attachChild(mWayPoint2);
 		scene.attachChild(mWayPoint3);
@@ -193,12 +236,26 @@ public class TowerDefense extends SimpleBaseGameActivity {
 		mWaveSet1.add(mWave1);
 		
 		// instantiate and place SpawnPoints
-		mSpawnPoint1 = new SpawnPoint(mWaveSet1, TowerDefense.WAVE_DELAY_NORMAL, mPath1, 15, 103, getVertexBufferObjectManager());
+		mSpawnPoint1 = new SpawnPoint(mWaveSet1, TowerDefense.WAVE_DELAY_NORMAL, mPath1, -25, 110, getVertexBufferObjectManager());
 		scene.attachChild(mSpawnPoint1);
 		
-		//TODO instantiate and place BasePoints
-		
-		//TODO register touch handlers to BasePoints
+		// instantiate and place BasePoints
+		mBasePoint1 = new BasePoint(200, 165, getVertexBufferObjectManager());
+		mBasePoint2 = new BasePoint(300, 165, getVertexBufferObjectManager());
+		mBasePoint3 = new BasePoint(450, 165, getVertexBufferObjectManager());
+		mBasePoint4 = new BasePoint(550, 165, getVertexBufferObjectManager());
+		mBasePoint5 = new BasePoint(200, 305, getVertexBufferObjectManager());
+		mBasePoint6 = new BasePoint(300, 305, getVertexBufferObjectManager());
+		mBasePoint7 = new BasePoint(450, 305, getVertexBufferObjectManager());
+		mBasePoint8 = new BasePoint(550, 305, getVertexBufferObjectManager());
+		scene.attachChild(mBasePoint1);
+		scene.attachChild(mBasePoint2);
+		scene.attachChild(mBasePoint3);
+		scene.attachChild(mBasePoint4);
+		scene.attachChild(mBasePoint5);
+		scene.attachChild(mBasePoint6);
+		scene.attachChild(mBasePoint7);
+		scene.attachChild(mBasePoint8);
 		
 		// return the scene
 		return scene;

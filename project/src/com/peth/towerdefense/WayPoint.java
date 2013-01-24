@@ -10,6 +10,9 @@ public class WayPoint extends Sprite {
 		// superconstructor
 		super(x, y, TowerDefense.wayPointTextureRegion, pVertexBufferObjectManager);
 		
+		// set visibility
+		setVisible(false);
+		
 	}
 	
 }
