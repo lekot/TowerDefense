@@ -6,12 +6,13 @@ import java.util.ArrayList;
 import java.util.Date;
 
 import org.andengine.engine.camera.Camera;
-import org.andengine.engine.handler.IUpdateHandler;
 import org.andengine.engine.options.EngineOptions;
 import org.andengine.engine.options.ScreenOrientation;
 import org.andengine.engine.options.resolutionpolicy.RatioResolutionPolicy;
 import org.andengine.entity.scene.Scene;
 import org.andengine.entity.sprite.Sprite;
+import org.andengine.entity.text.Text;
+import org.andengine.opengl.font.FontFactory;
 import org.andengine.opengl.font.IFont;
 import org.andengine.opengl.texture.ITexture;
 import org.andengine.opengl.texture.bitmap.BitmapTexture;
@@ -19,21 +20,21 @@ import org.andengine.opengl.texture.region.ITextureRegion;
 import org.andengine.opengl.texture.region.TextureRegionFactory;
 import org.andengine.ui.activity.SimpleBaseGameActivity;
 import org.andengine.util.adt.io.in.IInputStreamOpener;
+import org.andengine.util.color.Color;
 import org.andengine.util.debug.Debug;
 
+import android.graphics.Typeface;
 import android.os.Bundle;
 import android.view.Menu;
-import android.widget.Toast;
 
 public class TowerDefense extends SimpleBaseGameActivity {
 	
 	// constants
 	public static final int STARTING_COINS = 200;
 	public static final int MAX_HEALTH = 5;
-	public static final int WAVE_DELAY_NORMAL = 10000;
+	public static final int START_DELAY = 5000;
+	public static final int WAVE_DELAY_NORMAL = 40000;
 	public static final int ENEMY_TEST = 0;
-	public static final int TOWER_EMPTY = 0;
-	public static final int TOWER_TEST = 1;
 	
 	// camera variables
 	private static int CAMERA_WIDTH = 800;
@@ -46,6 +47,9 @@ public class TowerDefense extends SimpleBaseGameActivity {
 	public static int mCoins;
 	private static int mHealth;
 	
+	// fonts
+	public static IFont FONT_NORMAL;
+	
 	// textures
 	private ITextureRegion mBackgroundTextureRegion;
 	public static ITextureRegion enemyTextureRegion;
@@ -54,6 +58,8 @@ public class TowerDefense extends SimpleBaseGameActivity {
 	public static ITextureRegion basePointTextureRegion;
 	public static ITextureRegion towerTextureRegion;
 	public static ITextureRegion roundTextureRegion;
+	public static ITextureRegion TEXTURE_TOWER_SLOW;
+	public static ITextureRegion TEXTURE_ROUND_SLOW;
 	
 	// scene
 	public static Scene scene;
@@ -70,6 +76,8 @@ public class TowerDefense extends SimpleBaseGameActivity {
 	
 	// waves
 	public static ArrayList<Integer> mWave1;
+	public static ArrayList<Integer> mWave2;
+	public static ArrayList<Integer> mWave3;
 	
 	// wave sets
 	public static ArrayList<ArrayList<Integer>> mWaveSet1;
@@ -87,8 +95,13 @@ public class TowerDefense extends SimpleBaseGameActivity {
 	public static BasePoint mBasePoint7;
 	public static BasePoint mBasePoint8;
 	
+	// ui text areas
+	public static Text mHealthText;
+	public static Text mCoinsText;
+	public static Text mScoreText;
+	
 	// enemies
-	public static ArrayList<Enemy> currentEnemies = new ArrayList<Enemy>();
+	public static ArrayList<Enemy> spawnedEnemies = new ArrayList<Enemy>();
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -123,6 +136,10 @@ public class TowerDefense extends SimpleBaseGameActivity {
 	protected void onCreateResources() {
 		
 		try {
+			
+			// set up fonts
+			TowerDefense.FONT_NORMAL = FontFactory.create(this.getFontManager(), this.getTextureManager(), 256, 256, Typeface.create(Typeface.DEFAULT, Typeface.BOLD), 16);
+			TowerDefense.FONT_NORMAL.load();
 			
 		    // set up bitmap textures
 		    ITexture backgroundTexture = new BitmapTexture(this.getTextureManager(), new IInputStreamOpener() {
@@ -167,6 +184,18 @@ public class TowerDefense extends SimpleBaseGameActivity {
 		            return getAssets().open("gfx/round.png");
 		        }
 		    });
+		    ITexture slowTowerTexture = new BitmapTexture(this.getTextureManager(), new IInputStreamOpener() {
+		        @Override
+		        public InputStream open() throws IOException {
+		            return getAssets().open("gfx/tower_slow.png");
+		        }
+		    });
+		    ITexture slowRoundTexture = new BitmapTexture(this.getTextureManager(), new IInputStreamOpener() {
+		        @Override
+		        public InputStream open() throws IOException {
+		            return getAssets().open("gfx/round_slow.png");
+		        }
+		    });
 		    
 		    // load bitmap textures into VRAM
 		    backgroundTexture.load();
@@ -176,6 +205,8 @@ public class TowerDefense extends SimpleBaseGameActivity {
 		    basePointTexture.load();
 		    towerTexture.load();
 		    roundTexture.load();
+		    slowTowerTexture.load();
+		    slowRoundTexture.load();
 		    
 		    // set up texture regions
 		    this.mBackgroundTextureRegion = TextureRegionFactory.extractFromTexture(backgroundTexture);
@@ -185,6 +216,8 @@ public class TowerDefense extends SimpleBaseGameActivity {
 		    TowerDefense.basePointTextureRegion = TextureRegionFactory.extractFromTexture(basePointTexture);
 		    TowerDefense.towerTextureRegion = TextureRegionFactory.extractFromTexture(towerTexture);
 		    TowerDefense.roundTextureRegion = TextureRegionFactory.extractFromTexture(roundTexture);
+		    TowerDefense.TEXTURE_TOWER_SLOW = TextureRegionFactory.extractFromTexture(slowTowerTexture);
+		    TowerDefense.TEXTURE_ROUND_SLOW = TextureRegionFactory.extractFromTexture(slowRoundTexture);
 		    
 		} catch (IOException e) {
 		    Debug.e(e);
@@ -222,18 +255,23 @@ public class TowerDefense extends SimpleBaseGameActivity {
 		
 		// define waves
 		mWave1 = new ArrayList<Integer>();
-		mWave1.add(TowerDefense.ENEMY_TEST);
-		mWave1.add(TowerDefense.ENEMY_TEST);
-		mWave1.add(TowerDefense.ENEMY_TEST);
-		mWave1.add(TowerDefense.ENEMY_TEST);
-		mWave1.add(TowerDefense.ENEMY_TEST);
-		mWave1.add(TowerDefense.ENEMY_TEST);
+		for (int i = 0; i < 10; i++) {
+			mWave1.add(TowerDefense.ENEMY_TEST);
+		}
+		mWave2 = new ArrayList<Integer>();
+		for (int i = 0; i < 20; i++) {
+			mWave2.add(TowerDefense.ENEMY_TEST);
+		}
+		mWave3 = new ArrayList<Integer>();
+		for (int i = 0; i < 30; i++) {
+			mWave3.add(TowerDefense.ENEMY_TEST);
+		}
 		
 		// define wave sets
 		mWaveSet1 = new ArrayList<ArrayList<Integer>>();
 		mWaveSet1.add(mWave1);
-		mWaveSet1.add(mWave1);
-		mWaveSet1.add(mWave1);
+		mWaveSet1.add(mWave2);
+		mWaveSet1.add(mWave3);
 		
 		// instantiate and place SpawnPoints
 		mSpawnPoint1 = new SpawnPoint(mWaveSet1, TowerDefense.WAVE_DELAY_NORMAL, mPath1, -25, 110, getVertexBufferObjectManager());
@@ -257,6 +295,17 @@ public class TowerDefense extends SimpleBaseGameActivity {
 		scene.attachChild(mBasePoint7);
 		scene.attachChild(mBasePoint8);
 		
+		// set up gui
+		mHealthText = new Text(30, 30, TowerDefense.FONT_NORMAL, "HEALTH: " + mHealth, 32, getVertexBufferObjectManager());
+		mCoinsText = new Text(150, 30, TowerDefense.FONT_NORMAL, "COINS: " + mCoins, 32, getVertexBufferObjectManager());
+		mScoreText = new Text(270, 30, TowerDefense.FONT_NORMAL, "SCORE: " + mScore, 32, getVertexBufferObjectManager());
+		mHealthText.setColor(Color.WHITE);
+		mCoinsText.setColor(Color.WHITE);
+		mScoreText.setColor(Color.WHITE);
+		scene.attachChild(mHealthText);
+		scene.attachChild(mCoinsText);
+		scene.attachChild(mScoreText);
+		
 		// return the scene
 		return scene;
 	}
@@ -279,6 +328,14 @@ public class TowerDefense extends SimpleBaseGameActivity {
 	// checks whether the player is dead
 	public static boolean dead() {
 		return (mHealth <= 0);
+	}
+	
+	public static void updateGUI() {
+		
+		mHealthText.setText("HEALTH: " + mHealth);
+		mCoinsText.setText("COINS: " + mCoins);
+		mScoreText.setText("SCORE: " + mScore);
+		
 	}
 
 }

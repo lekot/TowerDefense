@@ -1,26 +1,26 @@
 package com.peth.towerdefense;
 
 import org.andengine.entity.sprite.Sprite;
+import org.andengine.opengl.texture.region.ITextureRegion;
 import org.andengine.opengl.vbo.VertexBufferObjectManager;
 
-import android.widget.Toast;
-
-public class Round extends Sprite {
+public abstract class Round extends Sprite {
 	
-	final Sprite self = this;
+	// effect constants
+	public static final int EFFECT_NONE = 0;
+	public static final int EFFECT_SLOW = 1;
+	
+	// globals
 	public Enemy mTarget;
 	public float mSpeed;
 	public float mDamage;
+	public int mEffect = EFFECT_NONE;
 	
-	public Round(Enemy target, float x, float y, VertexBufferObjectManager pVertexBufferObjectManager) {
+	// constructor
+	public Round(float x, float y, ITextureRegion texture, VertexBufferObjectManager pVertexBufferObjectManager) {
 		
 		// superconstructor
-		super(x, y, TowerDefense.roundTextureRegion, pVertexBufferObjectManager);
-		
-		// get variables
-		mTarget = target;
-		mSpeed = 5;
-		mDamage = 20;
+		super(x, y, texture, pVertexBufferObjectManager);
 		
 		// start scanning for enemies
 		Thread moveThread = new Thread(new MoveTask());
@@ -33,6 +33,7 @@ public class Round extends Sprite {
 		@Override
 		public void run() {
 			
+			// while enemy has not reached target (null check is for the sake of preventing thread collisions)
 			while (mTarget != null && (Math.abs(getX() - mTarget.getX()) > mSpeed || Math.abs(getY() - mTarget.getY()) > mSpeed)) {
 				
 				// update location
@@ -52,17 +53,59 @@ public class Round extends Sprite {
 				
 			}
 			
-			// enemy has reached target
-			impact();
+			// enemy has reached target (null check for the sake of thread collision)
+			if (mTarget != null) {
+				mTarget.hit(mDamage, mEffect);
+			}
+			setVisible(false); //TODO change to TowerDefense.scene.detachChild(this) on update thread
 			
 		}
 		
 	}
 	
-	public void impact() {
+}
+
+class TestRound extends Round {
+	
+	// constants
+	public static final int SPEED = 5;
+	public static final int DAMAGE = 15;
+	public static final ITextureRegion TEXTURE = TowerDefense.roundTextureRegion;
+	
+	// constructor
+	public TestRound(Enemy target, float x, float y, VertexBufferObjectManager pVertexBufferObjectManager) {
 		
-		if (mTarget != null) mTarget.getDamage(mDamage);
-		setVisible(false); //TODO change to TowerDefense.scene.detachChild(this) on update thread
+		// superconstructor
+		super(x, y, TEXTURE, pVertexBufferObjectManager);
+		
+		// set variables
+		mTarget = target;
+		mSpeed = SPEED;
+		mDamage = DAMAGE;
+		
+	}
+	
+}
+
+class SlowRound extends Round {
+	
+	// constants
+	public static final int SPEED = 5;
+	public static final int DAMAGE = 0;
+	public static final ITextureRegion TEXTURE = TowerDefense.TEXTURE_ROUND_SLOW;
+	public static final int EFFECT = EFFECT_SLOW;
+	
+	// constructor
+	public SlowRound(Enemy target, float x, float y, VertexBufferObjectManager pVertexBufferObjectManager) {
+		
+		// superconstructor
+		super(x, y, TEXTURE, pVertexBufferObjectManager);
+		
+		// set variables
+		mTarget = target;
+		mSpeed = SPEED;
+		mDamage = DAMAGE;
+		mEffect = EFFECT;
 		
 	}
 	

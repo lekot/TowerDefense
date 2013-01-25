@@ -6,6 +6,11 @@ import org.andengine.opengl.vbo.VertexBufferObjectManager;
 
 public class BasePoint extends Sprite {
 	
+	// tower constants
+	public static final int TOWER_TEST = 0;
+	public static final int TOWER_SLOW = 1;
+	
+	// globals
 	Tower currentTower = null;
 	
 	public BasePoint(float x, float y, VertexBufferObjectManager pVertexBufferObjectManager) {
@@ -22,10 +27,28 @@ public class BasePoint extends Sprite {
     public boolean onAreaTouched(TouchEvent pSceneTouchEvent, float pTouchAreaLocalX, float pTouchAreaLocalY) {
         
 		if (pSceneTouchEvent.getAction() == TouchEvent.ACTION_UP) {
+			
 			if (currentTower == null) {
-				buildTower(TowerDefense.TOWER_TEST);
+				
+				//TODO make a way to select which tower to build
+				if (TowerDefense.mCoins < 240) {
+					if (TowerDefense.mCoins >= TestTower.PRICE) {
+						buildTower(TOWER_TEST);
+						TowerDefense.mCoins -= TestTower.PRICE;
+						TowerDefense.updateGUI();
+					}
+				} else {
+					if (TowerDefense.mCoins >= SlowTower.PRICE) {
+						buildTower(TOWER_SLOW);
+						TowerDefense.mCoins -= SlowTower.PRICE;
+						TowerDefense.updateGUI();
+					}
+				}
+				
 			} else {
+				
 				destroyTower();
+				
 			}
 		}
 		
@@ -35,8 +58,12 @@ public class BasePoint extends Sprite {
 	public void buildTower(int towerCode) {
 		
 		switch (towerCode) {
-		case TowerDefense.TOWER_TEST:
-			currentTower = new Tower(getX(), getY(), getVertexBufferObjectManager());
+		case TOWER_TEST:
+			currentTower = new TestTower(getX(), getY(), getVertexBufferObjectManager());
+			TowerDefense.scene.attachChild(currentTower);
+			break;
+		case TOWER_SLOW:
+			currentTower = new SlowTower(getX(), getY(), getVertexBufferObjectManager());
 			TowerDefense.scene.attachChild(currentTower);
 			break;
 		}

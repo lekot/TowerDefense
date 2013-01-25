@@ -7,8 +7,6 @@ import java.util.TimerTask;
 import org.andengine.entity.sprite.Sprite;
 import org.andengine.opengl.vbo.VertexBufferObjectManager;
 
-import com.peth.towerdefense.Enemy.MoveTask;
-
 public class SpawnPoint extends Sprite {
 	
 	// constants
@@ -38,7 +36,7 @@ public class SpawnPoint extends Sprite {
         
         // start timer
         waveTimer = new Timer();
-        waveTimer.schedule(new WaveTask(), mWaveDelay, mWaveDelay);
+        waveTimer.schedule(new WaveTask(), TowerDefense.START_DELAY, mWaveDelay);
     }
 	
 	class WaveTask extends TimerTask {
@@ -82,11 +80,11 @@ public class SpawnPoint extends Sprite {
 		
 		// determine which enemy was requested and spawn it
 		switch (enemyCode) {
-			case TowerDefense.ENEMY_TEST:
-				Enemy enemy = new Enemy(mPath, getX() + (long) (Math.random()*20-10), getY() + (long) (Math.random()*20-10), getVertexBufferObjectManager());
-				TowerDefense.currentEnemies.add(enemy);
-				TowerDefense.scene.attachChild(enemy);
-				break;
+		case TowerDefense.ENEMY_TEST:
+			Enemy enemy = new TestEnemy(mPath, getX() + (long) (Math.random()*20-10), getY() + (long) (Math.random()*20-10), getVertexBufferObjectManager());
+			TowerDefense.spawnedEnemies.add(enemy);
+			TowerDefense.scene.attachChild(enemy);
+			break;
 		}
 		 
 	}
