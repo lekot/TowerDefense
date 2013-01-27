@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.Date;
 
 import org.andengine.engine.camera.Camera;
+import org.andengine.engine.handler.IUpdateHandler;
 import org.andengine.engine.options.EngineOptions;
 import org.andengine.engine.options.ScreenOrientation;
 import org.andengine.engine.options.resolutionpolicy.RatioResolutionPolicy;
@@ -29,9 +30,22 @@ import android.view.Menu;
 
 public class TowerDefense extends SimpleBaseGameActivity {
 	
-	// constants
-	public static final int STARTING_COINS = 200;
-	public static final int MAX_HEALTH = 5;
+	// texture constants
+	public static ITextureRegion TEXTURE_SELECTIONWHEEL;
+	public static ITextureRegion TEXTURE_ENEMY_TEST;
+	public static ITextureRegion TEXTURE_SPAWNPOINT;
+	public static ITextureRegion TEXTURE_WAYPOINT;
+	public static ITextureRegion TEXTURE_BASEPOINT;
+	public static ITextureRegion TEXTURE_TOWER_TEST;
+	public static ITextureRegion TEXTURE_ROUND_TEST;
+	public static ITextureRegion TEXTURE_TOWER_SLOW;
+	public static ITextureRegion TEXTURE_ROUND_SLOW;
+	public static ITextureRegion TEXTURE_TOWER_FIRE;
+	public static ITextureRegion TEXTURE_ROUND_FIRE;
+	
+	// game constants
+	public static final int STARTING_COINS = 300;
+	public static final int MAX_HEALTH = 20;
 	public static final int START_DELAY = 5000;
 	public static final int WAVE_DELAY_NORMAL = 40000;
 	public static final int ENEMY_TEST = 0;
@@ -41,67 +55,85 @@ public class TowerDefense extends SimpleBaseGameActivity {
 	private static int CAMERA_HEIGHT = 480;
 	
 	// globals
-	public static int mScore;
+	private ITextureRegion mBackgroundTextureRegion;
+	public static TowerDefense mLevel;
+	public int mScore;
 	public Date mTime;
-	public static int mWavesLeft;
-	public static int mCoins;
-	private static int mHealth;
+	public int mWavesLeft;
+	public int mCoins;
+	private int mHealth;
+	public ArrayList<Integer> mAvailableTowers;
+	public static IUpdateHandler mUpdateHandler;
 	
 	// fonts
 	public static IFont FONT_NORMAL;
 	
-	// textures
-	private ITextureRegion mBackgroundTextureRegion;
-	public static ITextureRegion enemyTextureRegion;
-	public static ITextureRegion spawnPointTextureRegion;
-	public static ITextureRegion wayPointTextureRegion;
-	public static ITextureRegion basePointTextureRegion;
-	public static ITextureRegion towerTextureRegion;
-	public static ITextureRegion roundTextureRegion;
-	public static ITextureRegion TEXTURE_TOWER_SLOW;
-	public static ITextureRegion TEXTURE_ROUND_SLOW;
-	
 	// scene
-	public static Scene scene;
+	public Scene mScene;
 	
 	// way points
-	public static WayPoint mWayPoint1;
-	public static WayPoint mWayPoint2;
-	public static WayPoint mWayPoint3;
-	public static WayPoint mWayPoint4;
-	public static WayPoint mWayPoint5;
+	public WayPoint mWayPoint1;
+	public WayPoint mWayPoint2;
+	public WayPoint mWayPoint3;
+	public WayPoint mWayPoint4;
+	public WayPoint mWayPoint5;
+	public WayPoint mWayPoint6;
+	public WayPoint mWayPoint7;
+	public WayPoint mWayPoint8;
+	public WayPoint mWayPoint9;
+	public WayPoint mWayPoint10;
+	public WayPoint mWayPoint11;
+	public WayPoint mWayPoint12;
+	public WayPoint mWayPoint13;
+	public WayPoint mWayPoint14;
+	public WayPoint mWayPoint15;
+	public WayPoint mWayPoint16;
+	public WayPoint mWayPoint17;
+	public WayPoint mWayPoint18;
+	public WayPoint mWayPoint19;
+	public WayPoint mWayPoint20;
+	public WayPoint mWayPoint21;
+	public WayPoint mWayPoint22;
+	public WayPoint mWayPoint23;
+	public WayPoint mWayPoint24;
+	public WayPoint mWayPoint25;
+	public WayPoint mWayPoint26;
+	public WayPoint mWayPoint27;
+	public WayPoint mWayPoint28;
+	public WayPoint mWayPoint29;
+	public WayPoint mWayPoint30;
 	
 	// paths
-	public static ArrayList<WayPoint> mPath1;
+	public ArrayList<WayPoint> mPath1;
 	
 	// waves
-	public static ArrayList<Integer> mWave1;
-	public static ArrayList<Integer> mWave2;
-	public static ArrayList<Integer> mWave3;
+	public ArrayList<Integer> mWave1;
+	public ArrayList<Integer> mWave2;
+	public ArrayList<Integer> mWave3;
 	
 	// wave sets
-	public static ArrayList<ArrayList<Integer>> mWaveSet1;
+	public ArrayList<ArrayList<Integer>> mWaveSet1;
 	
 	// spawn points
-	public static SpawnPoint mSpawnPoint1;
+	public SpawnPoint mSpawnPoint1;
 	
 	// base points
-	public static BasePoint mBasePoint1;
-	public static BasePoint mBasePoint2;
-	public static BasePoint mBasePoint3;
-	public static BasePoint mBasePoint4;
-	public static BasePoint mBasePoint5;
-	public static BasePoint mBasePoint6;
-	public static BasePoint mBasePoint7;
-	public static BasePoint mBasePoint8;
+	public BasePoint mBasePoint1;
+	public BasePoint mBasePoint2;
+	public BasePoint mBasePoint3;
+	public BasePoint mBasePoint4;
+	public BasePoint mBasePoint5;
+	public BasePoint mBasePoint6;
+	public BasePoint mBasePoint7;
+	public BasePoint mBasePoint8;
 	
 	// ui text areas
-	public static Text mHealthText;
-	public static Text mCoinsText;
-	public static Text mScoreText;
+	public Text mHealthText;
+	public Text mCoinsText;
+	public Text mScoreText;
 	
 	// enemies
-	public static ArrayList<Enemy> spawnedEnemies = new ArrayList<Enemy>();
+	public ArrayList<Enemy> spawnedEnemies = new ArrayList<Enemy>();
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -110,10 +142,15 @@ public class TowerDefense extends SimpleBaseGameActivity {
 		super.onCreate(savedInstanceState);
 		
 		// initialize variables
-		mScore = 0;
-		mTime = new Date();
-		mCoins = STARTING_COINS;
-		mHealth = MAX_HEALTH;
+		mLevel = new TowerDefense();
+		mLevel.mScore = 0;
+		mLevel.mTime = new Date();
+		mLevel.mCoins = STARTING_COINS;
+		mLevel.mHealth = MAX_HEALTH;
+		mLevel.mAvailableTowers = new ArrayList<Integer>();
+		mLevel.mAvailableTowers.add(BasePoint.TOWER_TEST);
+		mLevel.mAvailableTowers.add(BasePoint.TOWER_SLOW);
+		mLevel.mAvailableTowers.add(BasePoint.TOWER_FIRE);
 		
 	}
 
@@ -146,6 +183,12 @@ public class TowerDefense extends SimpleBaseGameActivity {
 		        @Override
 		        public InputStream open() throws IOException {
 		            return getAssets().open("gfx/background.png");
+		        }
+		    });
+		    ITexture selectionWheelTexture = new BitmapTexture(this.getTextureManager(), new IInputStreamOpener() {
+		        @Override
+		        public InputStream open() throws IOException {
+		            return getAssets().open("gfx/selection_wheel.png");
 		        }
 		    });
 		    ITexture enemyTexture = new BitmapTexture(this.getTextureManager(), new IInputStreamOpener() {
@@ -196,9 +239,22 @@ public class TowerDefense extends SimpleBaseGameActivity {
 		            return getAssets().open("gfx/round_slow.png");
 		        }
 		    });
+		    ITexture fireTowerTexture = new BitmapTexture(this.getTextureManager(), new IInputStreamOpener() {
+		        @Override
+		        public InputStream open() throws IOException {
+		            return getAssets().open("gfx/tower_fire.png");
+		        }
+		    });
+		    ITexture fireRoundTexture = new BitmapTexture(this.getTextureManager(), new IInputStreamOpener() {
+		        @Override
+		        public InputStream open() throws IOException {
+		            return getAssets().open("gfx/round_fire.png");
+		        }
+		    });
 		    
 		    // load bitmap textures into VRAM
 		    backgroundTexture.load();
+		    selectionWheelTexture.load();
 		    enemyTexture.load();
 		    spawnPointTexture.load();
 		    wayPointTexture.load();
@@ -207,17 +263,22 @@ public class TowerDefense extends SimpleBaseGameActivity {
 		    roundTexture.load();
 		    slowTowerTexture.load();
 		    slowRoundTexture.load();
+		    fireTowerTexture.load();
+		    fireRoundTexture.load();
 		    
 		    // set up texture regions
 		    this.mBackgroundTextureRegion = TextureRegionFactory.extractFromTexture(backgroundTexture);
-		    TowerDefense.enemyTextureRegion = TextureRegionFactory.extractFromTexture(enemyTexture);
-		    TowerDefense.spawnPointTextureRegion = TextureRegionFactory.extractFromTexture(spawnPointTexture);
-		    TowerDefense.wayPointTextureRegion = TextureRegionFactory.extractFromTexture(wayPointTexture);
-		    TowerDefense.basePointTextureRegion = TextureRegionFactory.extractFromTexture(basePointTexture);
-		    TowerDefense.towerTextureRegion = TextureRegionFactory.extractFromTexture(towerTexture);
-		    TowerDefense.roundTextureRegion = TextureRegionFactory.extractFromTexture(roundTexture);
+		    TowerDefense.TEXTURE_SELECTIONWHEEL = TextureRegionFactory.extractFromTexture(selectionWheelTexture);
+		    TowerDefense.TEXTURE_ENEMY_TEST = TextureRegionFactory.extractFromTexture(enemyTexture);
+		    TowerDefense.TEXTURE_SPAWNPOINT = TextureRegionFactory.extractFromTexture(spawnPointTexture);
+		    TowerDefense.TEXTURE_WAYPOINT = TextureRegionFactory.extractFromTexture(wayPointTexture);
+		    TowerDefense.TEXTURE_BASEPOINT = TextureRegionFactory.extractFromTexture(basePointTexture);
+		    TowerDefense.TEXTURE_TOWER_TEST = TextureRegionFactory.extractFromTexture(towerTexture);
+		    TowerDefense.TEXTURE_ROUND_TEST = TextureRegionFactory.extractFromTexture(roundTexture);
 		    TowerDefense.TEXTURE_TOWER_SLOW = TextureRegionFactory.extractFromTexture(slowTowerTexture);
 		    TowerDefense.TEXTURE_ROUND_SLOW = TextureRegionFactory.extractFromTexture(slowRoundTexture);
+		    TowerDefense.TEXTURE_TOWER_FIRE = TextureRegionFactory.extractFromTexture(fireTowerTexture);
+		    TowerDefense.TEXTURE_ROUND_FIRE = TextureRegionFactory.extractFromTexture(fireRoundTexture);
 		    
 		} catch (IOException e) {
 		    Debug.e(e);
@@ -229,92 +290,155 @@ public class TowerDefense extends SimpleBaseGameActivity {
 	protected Scene onCreateScene() {
 		
 		// create the scene
-		scene = new Scene();
+		mLevel.mScene = new Scene();
 		Sprite backgroundSprite = new Sprite(0, 0, this.mBackgroundTextureRegion, getVertexBufferObjectManager());
-		scene.attachChild(backgroundSprite);
+		mLevel.mScene.attachChild(backgroundSprite);
 		
 		// instantiate and place WayPoints
-		mWayPoint1 = new WayPoint(665, 95, getVertexBufferObjectManager());
-		mWayPoint2 = new WayPoint(618, 248, getVertexBufferObjectManager());
-		mWayPoint3 = new WayPoint(122, 240, getVertexBufferObjectManager());
-		mWayPoint4 = new WayPoint(134, 386, getVertexBufferObjectManager());
-		mWayPoint5 = new WayPoint(800, 376, getVertexBufferObjectManager());
-		scene.attachChild(mWayPoint1);
-		scene.attachChild(mWayPoint2);
-		scene.attachChild(mWayPoint3);
-		scene.attachChild(mWayPoint4);
-		scene.attachChild(mWayPoint5);
+		mLevel.mWayPoint1 = new WayPoint(100, 430, getVertexBufferObjectManager());
+		mLevel.mWayPoint2 = new WayPoint(110, 300, getVertexBufferObjectManager());
+		mLevel.mWayPoint3 = new WayPoint(140, 200, getVertexBufferObjectManager());
+		mLevel.mWayPoint4 = new WayPoint(165, 150, getVertexBufferObjectManager());
+		mLevel.mWayPoint5 = new WayPoint(200, 118, getVertexBufferObjectManager());
+		mLevel.mWayPoint6 = new WayPoint(250, 90, getVertexBufferObjectManager());
+		mLevel.mWayPoint7 = new WayPoint(300, 80, getVertexBufferObjectManager());
+		mLevel.mWayPoint8 = new WayPoint(400, 70, getVertexBufferObjectManager());
+		mLevel.mWayPoint9 = new WayPoint(500, 80, getVertexBufferObjectManager());
+		mLevel.mWayPoint10 = new WayPoint(580, 100, getVertexBufferObjectManager());
+		mLevel.mWayPoint11 = new WayPoint(640, 130, getVertexBufferObjectManager());
+		mLevel.mWayPoint12 = new WayPoint(670, 170, getVertexBufferObjectManager());
+		mLevel.mWayPoint13 = new WayPoint(675, 200, getVertexBufferObjectManager());
+		mLevel.mWayPoint14 = new WayPoint(660, 235, getVertexBufferObjectManager());
+		mLevel.mWayPoint15 = new WayPoint(630, 250, getVertexBufferObjectManager());
+		mLevel.mWayPoint16 = new WayPoint(580, 255, getVertexBufferObjectManager());
+		mLevel.mWayPoint17 = new WayPoint(520, 250, getVertexBufferObjectManager());
+		mLevel.mWayPoint18 = new WayPoint(440, 240, getVertexBufferObjectManager());
+		mLevel.mWayPoint19 = new WayPoint(390, 235, getVertexBufferObjectManager());
+		mLevel.mWayPoint20 = new WayPoint(330, 245, getVertexBufferObjectManager());
+		mLevel.mWayPoint21 = new WayPoint(300, 275, getVertexBufferObjectManager());
+		mLevel.mWayPoint22 = new WayPoint(295, 310, getVertexBufferObjectManager());
+		mLevel.mWayPoint23 = new WayPoint(315, 350, getVertexBufferObjectManager());
+		mLevel.mWayPoint24 = new WayPoint(365, 380, getVertexBufferObjectManager());
+		mLevel.mWayPoint25 = new WayPoint(460, 400, getVertexBufferObjectManager());
+		mLevel.mWayPoint26 = new WayPoint(580, 410, getVertexBufferObjectManager());
+		mLevel.mWayPoint27 = new WayPoint(700, 410, getVertexBufferObjectManager());
+		mLevel.mWayPoint28 = new WayPoint(815, 405, getVertexBufferObjectManager());
 		
 		// define paths
-		mPath1 = new ArrayList<WayPoint>();
-		mPath1.add(mWayPoint1);
-		mPath1.add(mWayPoint2);
-		mPath1.add(mWayPoint3);
-		mPath1.add(mWayPoint4);
-		mPath1.add(mWayPoint5);
+		mLevel.mPath1 = new ArrayList<WayPoint>();
+		mLevel.mPath1.add(mLevel.mWayPoint1);
+		mLevel.mPath1.add(mLevel.mWayPoint2);
+		mLevel.mPath1.add(mLevel.mWayPoint3);
+		mLevel.mPath1.add(mLevel.mWayPoint4);
+		mLevel.mPath1.add(mLevel.mWayPoint5);
+		mLevel.mPath1.add(mLevel.mWayPoint6);
+		mLevel.mPath1.add(mLevel.mWayPoint7);
+		mLevel.mPath1.add(mLevel.mWayPoint8);
+		mLevel.mPath1.add(mLevel.mWayPoint9);
+		mLevel.mPath1.add(mLevel.mWayPoint10);
+		mLevel.mPath1.add(mLevel.mWayPoint11);
+		mLevel.mPath1.add(mLevel.mWayPoint12);
+		mLevel.mPath1.add(mLevel.mWayPoint13);
+		mLevel.mPath1.add(mLevel.mWayPoint14);
+		mLevel.mPath1.add(mLevel.mWayPoint15);
+		mLevel.mPath1.add(mLevel.mWayPoint16);
+		mLevel.mPath1.add(mLevel.mWayPoint17);
+		mLevel.mPath1.add(mLevel.mWayPoint18);
+		mLevel.mPath1.add(mLevel.mWayPoint19);
+		mLevel.mPath1.add(mLevel.mWayPoint20);
+		mLevel.mPath1.add(mLevel.mWayPoint21);
+		mLevel.mPath1.add(mLevel.mWayPoint22);
+		mLevel.mPath1.add(mLevel.mWayPoint23);
+		mLevel.mPath1.add(mLevel.mWayPoint24);
+		mLevel.mPath1.add(mLevel.mWayPoint25);
+		mLevel.mPath1.add(mLevel.mWayPoint26);
+		mLevel.mPath1.add(mLevel.mWayPoint27);
+		mLevel.mPath1.add(mLevel.mWayPoint28);
+		
+		// add paths to the scene
+		for (int i = 0; i < mLevel.mPath1.size(); i++) {
+			mLevel.mScene.attachChild(mLevel.mPath1.get(i));
+		}
 		
 		// define waves
-		mWave1 = new ArrayList<Integer>();
-		for (int i = 0; i < 10; i++) {
-			mWave1.add(TowerDefense.ENEMY_TEST);
-		}
-		mWave2 = new ArrayList<Integer>();
+		mLevel.mWave1 = new ArrayList<Integer>();
 		for (int i = 0; i < 20; i++) {
-			mWave2.add(TowerDefense.ENEMY_TEST);
+			mLevel.mWave1.add(TowerDefense.ENEMY_TEST);
 		}
-		mWave3 = new ArrayList<Integer>();
-		for (int i = 0; i < 30; i++) {
-			mWave3.add(TowerDefense.ENEMY_TEST);
+		mLevel.mWave2 = new ArrayList<Integer>();
+		for (int i = 0; i < 40; i++) {
+			mLevel.mWave2.add(TowerDefense.ENEMY_TEST);
+		}
+		mLevel.mWave3 = new ArrayList<Integer>();
+		for (int i = 0; i < 60; i++) {
+			mLevel.mWave3.add(TowerDefense.ENEMY_TEST);
 		}
 		
 		// define wave sets
-		mWaveSet1 = new ArrayList<ArrayList<Integer>>();
-		mWaveSet1.add(mWave1);
-		mWaveSet1.add(mWave2);
-		mWaveSet1.add(mWave3);
+		mLevel.mWaveSet1 = new ArrayList<ArrayList<Integer>>();
+		mLevel.mWaveSet1.add(mLevel.mWave1);
+		mLevel.mWaveSet1.add(mLevel.mWave2);
+		mLevel.mWaveSet1.add(mLevel.mWave3);
 		
 		// instantiate and place SpawnPoints
-		mSpawnPoint1 = new SpawnPoint(mWaveSet1, TowerDefense.WAVE_DELAY_NORMAL, mPath1, -25, 110, getVertexBufferObjectManager());
-		scene.attachChild(mSpawnPoint1);
+		mLevel.mSpawnPoint1 = new SpawnPoint(mLevel.mWaveSet1, TowerDefense.WAVE_DELAY_NORMAL, mLevel.mPath1, 103, 495, getVertexBufferObjectManager());
+		mLevel.mScene.attachChild(mLevel.mSpawnPoint1);
 		
 		// instantiate and place BasePoints
-		mBasePoint1 = new BasePoint(200, 165, getVertexBufferObjectManager());
-		mBasePoint2 = new BasePoint(300, 165, getVertexBufferObjectManager());
-		mBasePoint3 = new BasePoint(450, 165, getVertexBufferObjectManager());
-		mBasePoint4 = new BasePoint(550, 165, getVertexBufferObjectManager());
-		mBasePoint5 = new BasePoint(200, 305, getVertexBufferObjectManager());
-		mBasePoint6 = new BasePoint(300, 305, getVertexBufferObjectManager());
-		mBasePoint7 = new BasePoint(450, 305, getVertexBufferObjectManager());
-		mBasePoint8 = new BasePoint(550, 305, getVertexBufferObjectManager());
-		scene.attachChild(mBasePoint1);
-		scene.attachChild(mBasePoint2);
-		scene.attachChild(mBasePoint3);
-		scene.attachChild(mBasePoint4);
-		scene.attachChild(mBasePoint5);
-		scene.attachChild(mBasePoint6);
-		scene.attachChild(mBasePoint7);
-		scene.attachChild(mBasePoint8);
+		mLevel.mBasePoint1 = new BasePoint(215, 240, getVertexBufferObjectManager());
+		mLevel.mBasePoint2 = new BasePoint(310, 165, getVertexBufferObjectManager());
+		mLevel.mBasePoint3 = new BasePoint(465, 160, getVertexBufferObjectManager());
+		mLevel.mBasePoint4 = new BasePoint(595, 185, getVertexBufferObjectManager());
+		mLevel.mBasePoint5 = new BasePoint(240, 405, getVertexBufferObjectManager());
+		mLevel.mBasePoint6 = new BasePoint(380, 310, getVertexBufferObjectManager());
+		mLevel.mBasePoint7 = new BasePoint(520, 330, getVertexBufferObjectManager());
+		mLevel.mBasePoint8 = new BasePoint(700, 330, getVertexBufferObjectManager());
+		mLevel.mScene.attachChild(mLevel.mBasePoint1);
+		mLevel.mScene.attachChild(mLevel.mBasePoint2);
+		mLevel.mScene.attachChild(mLevel.mBasePoint3);
+		mLevel.mScene.attachChild(mLevel.mBasePoint4);
+		mLevel.mScene.attachChild(mLevel.mBasePoint5);
+		mLevel.mScene.attachChild(mLevel.mBasePoint6);
+		mLevel.mScene.attachChild(mLevel.mBasePoint7);
+		mLevel.mScene.attachChild(mLevel.mBasePoint8);
 		
 		// set up gui
-		mHealthText = new Text(30, 30, TowerDefense.FONT_NORMAL, "HEALTH: " + mHealth, 32, getVertexBufferObjectManager());
-		mCoinsText = new Text(150, 30, TowerDefense.FONT_NORMAL, "COINS: " + mCoins, 32, getVertexBufferObjectManager());
-		mScoreText = new Text(270, 30, TowerDefense.FONT_NORMAL, "SCORE: " + mScore, 32, getVertexBufferObjectManager());
-		mHealthText.setColor(Color.WHITE);
-		mCoinsText.setColor(Color.WHITE);
-		mScoreText.setColor(Color.WHITE);
-		scene.attachChild(mHealthText);
-		scene.attachChild(mCoinsText);
-		scene.attachChild(mScoreText);
+		mLevel.mHealthText = new Text(30, 30, TowerDefense.FONT_NORMAL, "HEALTH: " + mLevel.mHealth, 32, getVertexBufferObjectManager());
+		mLevel.mCoinsText = new Text(30, 50, TowerDefense.FONT_NORMAL, "COINS: " + mLevel.mCoins, 32, getVertexBufferObjectManager());
+		mLevel.mScoreText = new Text(30, 70, TowerDefense.FONT_NORMAL, "SCORE: " + mLevel.mScore, 32, getVertexBufferObjectManager());
+		mLevel.mHealthText.setColor(Color.WHITE);
+		mLevel.mCoinsText.setColor(Color.WHITE);
+		mLevel.mScoreText.setColor(Color.WHITE);
+		mLevel.mScene.attachChild(mLevel.mHealthText);
+		mLevel.mScene.attachChild(mLevel.mCoinsText);
+		mLevel.mScene.attachChild(mLevel.mScoreText);
+		
+		// register update handler
+		mUpdateHandler = new IUpdateHandler() {
+			
+	        @Override
+	        public void onUpdate(float pSecondsElapsed) {
+	        	updateGUI();
+	        	TowerDefense.mLevel.mScene.sortChildren();
+	        }
+
+	        @Override
+	        public void reset() {
+	        	
+	        }
+	        
+		};
+		mLevel.mScene.registerUpdateHandler(mUpdateHandler);
 		
 		// return the scene
-		return scene;
+		return mLevel.mScene;
 	}
 	
 	// damages the player's health
-	public static void getDamage(int damage) {
+	public void getDamage(int damage) {
 		
 		// deal damage
-		mHealth -= damage;
+		mLevel.mHealth -= damage;
 		
 		// check if player just died
 		if (dead()) {
@@ -326,16 +450,17 @@ public class TowerDefense extends SimpleBaseGameActivity {
 	}
 	
 	// checks whether the player is dead
-	public static boolean dead() {
-		return (mHealth <= 0);
+	public boolean dead() {
+		return (mLevel.mHealth <= 0);
 	}
 	
-	public static void updateGUI() {
+	// updates the gui
+	public void updateGUI() {
 		
-		mHealthText.setText("HEALTH: " + mHealth);
-		mCoinsText.setText("COINS: " + mCoins);
-		mScoreText.setText("SCORE: " + mScore);
+		mLevel.mHealthText.setText("HEALTH: " + mLevel.mHealth);
+		mLevel.mCoinsText.setText("COINS: " + mLevel.mCoins);
+		mLevel.mScoreText.setText("SCORE: " + mLevel.mScore);
 		
 	}
-
+	
 }

@@ -2,56 +2,51 @@ package com.peth.towerdefense;
 
 import org.andengine.entity.sprite.Sprite;
 import org.andengine.input.touch.TouchEvent;
+import org.andengine.opengl.texture.region.ITextureRegion;
 import org.andengine.opengl.vbo.VertexBufferObjectManager;
 
 public class BasePoint extends Sprite {
 	
+	// texture constants
+	public static final ITextureRegion TEXTURE = TowerDefense.TEXTURE_BASEPOINT;
+	
 	// tower constants
 	public static final int TOWER_TEST = 0;
 	public static final int TOWER_SLOW = 1;
+	public static final int TOWER_FIRE = 2;
 	
 	// globals
-	Tower currentTower = null;
+	public float mCenterX;
+	public float mCenterY;
+	public Tower mCurrentTower = null;
+	public SelectionWheel mSelectionWheel;
 	
 	public BasePoint(float x, float y, VertexBufferObjectManager pVertexBufferObjectManager) {
 		
 		// superconstructor
-		super(x, y, TowerDefense.basePointTextureRegion, pVertexBufferObjectManager);
+		super(x - (TEXTURE.getWidth() / 2), y - (TEXTURE.getHeight() / 2), TEXTURE, pVertexBufferObjectManager);
+		
+		// set variables
+		mCenterX = getX() + (TEXTURE.getWidth() / 2);
+		mCenterY = getY() + (TEXTURE.getHeight() / 2);
 		
 		// register touch handler
-		TowerDefense.scene.registerTouchArea(this);
+		TowerDefense.mLevel.mScene.registerTouchArea(this);
 		
 	}
 	
 	@Override
     public boolean onAreaTouched(TouchEvent pSceneTouchEvent, float pTouchAreaLocalX, float pTouchAreaLocalY) {
         
-		if (pSceneTouchEvent.getAction() == TouchEvent.ACTION_UP) {
-			
-			if (currentTower == null) {
-				
-				//TODO make a way to select which tower to build
-				if (TowerDefense.mCoins < 240) {
-					if (TowerDefense.mCoins >= TestTower.PRICE) {
-						buildTower(TOWER_TEST);
-						TowerDefense.mCoins -= TestTower.PRICE;
-						TowerDefense.updateGUI();
-					}
+		if (pSceneTouchEvent.getAction() == TouchEvent.ACTION_DOWN) {
+			if (mCurrentTower == null) {
+				if (mSelectionWheel == null) {
+					showSelectionWheel();
 				} else {
-					if (TowerDefense.mCoins >= SlowTower.PRICE) {
-						buildTower(TOWER_SLOW);
-						TowerDefense.mCoins -= SlowTower.PRICE;
-						TowerDefense.updateGUI();
-					}
+					hideSelectionWheel();
 				}
-				
-			} else {
-				
-				destroyTower();
-				
 			}
 		}
-		
         return true;
     }
 	
@@ -59,21 +54,43 @@ public class BasePoint extends Sprite {
 		
 		switch (towerCode) {
 		case TOWER_TEST:
-			currentTower = new TestTower(getX(), getY(), getVertexBufferObjectManager());
-			TowerDefense.scene.attachChild(currentTower);
+			if (TowerDefense.mLevel.mCoins >= TestTower.PRICE) {
+				mCurrentTower = new TestTower(mCenterX, mCenterY, getVertexBufferObjectManager());
+				TowerDefense.mLevel.mScene.attachChild(mCurrentTower);
+				TowerDefense.mLevel.mCoins -= TestTower.PRICE;
+			}
 			break;
 		case TOWER_SLOW:
-			currentTower = new SlowTower(getX(), getY(), getVertexBufferObjectManager());
-			TowerDefense.scene.attachChild(currentTower);
+			if (TowerDefense.mLevel.mCoins >= SlowTower.PRICE) {
+				mCurrentTower = new SlowTower(mCenterX, mCenterY, getVertexBufferObjectManager());
+				TowerDefense.mLevel.mScene.attachChild(mCurrentTower);
+				TowerDefense.mLevel.mCoins -= SlowTower.PRICE;
+			}
+			break;
+		case TOWER_FIRE:
+			if (TowerDefense.mLevel.mCoins >= FireTower.PRICE) {
+				mCurrentTower = new FireTower(mCenterX, mCenterY, getVertexBufferObjectManager());
+				TowerDefense.mLevel.mScene.attachChild(mCurrentTower);
+				TowerDefense.mLevel.mCoins -= FireTower.PRICE;
+			}
 			break;
 		}
 		
 	}
 	
-	public void destroyTower() {
+	public void showSelectionWheel() {
 		
-		//TowerDefense.scene.detachChild(currentTower); //TODO needs to happen onUpdateThread
-		//currentTower = null;
+		mSelectionWheel = new SelectionWheel(mCenterX, mCenterY, this, SelectionWheel.TYPE_BASE, TowerDefense.mLevel.mAvailableTowers, getVertexBufferObjectManager());
+		TowerDefense.mLevel.mScene.attachChild(mSelectionWheel);
+		
+	}
+	
+	public void hideSelectionWheel() {
+		
+		if (mSelectionWheel != null) {
+			mSelectionWheel.hide();
+			mSelectionWheel = null;
+		}
 		
 	}
 	

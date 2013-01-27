@@ -9,13 +9,15 @@ public abstract class Tower extends Sprite {
 	// round constants
 	public static final int ROUND_TEST = 0;
 	public static final int ROUND_SLOW = 1;
+	public static final int ROUND_FIRE = 2;
 	
 	// scan method constants
 	public static final int SCAN_FIRST = 0;
 	public static final int SCAN_FIRST_NOT_SLOW = 1;
 	
 	// globals
-	public int mPrice;
+	public float mCenterX;
+	public float mCenterY;
 	public float mRange;
 	public int mRound;
 	public int mDelay;
@@ -26,7 +28,11 @@ public abstract class Tower extends Sprite {
 	public Tower(float x, float y, ITextureRegion texture, VertexBufferObjectManager pVertexBufferObjectManager) {
 		
 		// superconstructor
-		super(x, y, texture, pVertexBufferObjectManager);
+		super(x - (texture.getWidth() / 2), y - (texture.getHeight() / 2), texture, pVertexBufferObjectManager);
+		
+		// set variables
+		mCenterX = getX() + (texture.getWidth() / 2);
+		mCenterY = getY() + (texture.getHeight() / 2);
 		
 		// start scanning for enemies
 		Thread scanThread = new Thread(new ScanTask());
@@ -90,15 +96,15 @@ public abstract class Tower extends Sprite {
 		case SCAN_FIRST:
 			
 			// loop through all enemies
-			for (int i = 0; i < TowerDefense.spawnedEnemies.size(); i++) {
+			for (int i = 0; i < TowerDefense.mLevel.spawnedEnemies.size(); i++) {
 				
-				Enemy potentialTarget = TowerDefense.spawnedEnemies.get(i);
+				Enemy potentialTarget = TowerDefense.mLevel.spawnedEnemies.get(i);
 				
 				// check if enemy is targetable
 				if (!potentialTarget.isDead() && inRange(potentialTarget)) {
 					
 					// set the enemy as the target and stop scanning
-					mTarget = TowerDefense.spawnedEnemies.get(i);
+					mTarget = TowerDefense.mLevel.spawnedEnemies.get(i);
 					break;
 					
 				}
@@ -109,15 +115,15 @@ public abstract class Tower extends Sprite {
 		case SCAN_FIRST_NOT_SLOW:
 			
 			// loop through all enemies
-			for (int i = 0; i < TowerDefense.spawnedEnemies.size(); i++) {
+			for (int i = 0; i < TowerDefense.mLevel.spawnedEnemies.size(); i++) {
 				
-				Enemy potentialTarget = TowerDefense.spawnedEnemies.get(i);
+				Enemy potentialTarget = TowerDefense.mLevel.spawnedEnemies.get(i);
 				
 				// check if enemy is targetable
 				if (!potentialTarget.isDead() && inRange(potentialTarget) && !potentialTarget.isSlow()) {
 					
 					// set the enemy as the target and stop scanning
-					mTarget = TowerDefense.spawnedEnemies.get(i);
+					mTarget = TowerDefense.mLevel.spawnedEnemies.get(i);
 					break;
 					
 				}
@@ -150,12 +156,16 @@ public abstract class Tower extends Sprite {
 		
 		switch (roundCode) {
 		case ROUND_TEST:
-			Round testRound = new TestRound(mTarget, getX(), getY(), getVertexBufferObjectManager());
-			TowerDefense.scene.attachChild(testRound);
+			Round testRound = new TestRound(mTarget, mCenterX, mCenterY, getVertexBufferObjectManager());
+			TowerDefense.mLevel.mScene.attachChild(testRound);
 			break;
 		case ROUND_SLOW:
-			Round slowRound = new SlowRound(mTarget, getX(), getY(), getVertexBufferObjectManager());
-			TowerDefense.scene.attachChild(slowRound);
+			Round slowRound = new SlowRound(mTarget, mCenterX, mCenterY, getVertexBufferObjectManager());
+			TowerDefense.mLevel.mScene.attachChild(slowRound);
+			break;
+		case ROUND_FIRE:
+			Round fireRound = new FireRound(mTarget, mCenterX, mCenterY, getVertexBufferObjectManager());
+			TowerDefense.mLevel.mScene.attachChild(fireRound);
 			break;
 		}
 		
@@ -171,7 +181,7 @@ class TestTower extends Tower {
 	public static final int DELAY = 250;
 	public static final int ROUND = ROUND_TEST;
 	public static final int SCAN_METHOD = SCAN_FIRST;
-	public static final ITextureRegion TEXTURE = TowerDefense.towerTextureRegion;
+	public static final ITextureRegion TEXTURE = TowerDefense.TEXTURE_TOWER_TEST;
 	
 	public TestTower(float x, float y, VertexBufferObjectManager pVertexBufferObjectManager) {
 		
@@ -179,7 +189,6 @@ class TestTower extends Tower {
 		super(x, y, TEXTURE, pVertexBufferObjectManager);
 		
 		// set variables
-		mPrice = PRICE;
 		mRange = RANGE;
 		mDelay = DELAY;
 		mRound = ROUND;
@@ -205,7 +214,31 @@ class SlowTower extends Tower {
 		super(x, y, TEXTURE, pVertexBufferObjectManager);
 		
 		// set variables
-		mPrice = PRICE;
+		mRange = RANGE;
+		mDelay = DELAY;
+		mRound = ROUND;
+		mScanMethod = SCAN_METHOD;
+		
+	}
+	
+}
+
+class FireTower extends Tower {
+	
+	// constants
+	public static final int PRICE = 300;
+	public static final int RANGE = 120;
+	public static final int DELAY = 5;
+	public static final int ROUND = ROUND_FIRE;
+	public static final int SCAN_METHOD = SCAN_FIRST;
+	public static final ITextureRegion TEXTURE = TowerDefense.TEXTURE_TOWER_FIRE;
+	
+	public FireTower(float x, float y, VertexBufferObjectManager pVertexBufferObjectManager) {
+		
+		// superconstructor
+		super(x, y, TEXTURE, pVertexBufferObjectManager);
+		
+		// set variables
 		mRange = RANGE;
 		mDelay = DELAY;
 		mRound = ROUND;

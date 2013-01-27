@@ -5,14 +5,20 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 import org.andengine.entity.sprite.Sprite;
+import org.andengine.opengl.texture.region.ITextureRegion;
 import org.andengine.opengl.vbo.VertexBufferObjectManager;
 
 public class SpawnPoint extends Sprite {
 	
-	// constants
+	// texture constants
+	public static final ITextureRegion TEXTURE = TowerDefense.TEXTURE_SPAWNPOINT;
+	
+	// misc constants
 	public static final int SPAWN_DELAY = 500;
 	
 	// globals
+	public float mCenterX;
+	public float mCenterY;
 	public ArrayList<ArrayList<Integer>> mWaveSet;
 	int mCurrentWave;
 	public int mWaveDelay;
@@ -23,9 +29,11 @@ public class SpawnPoint extends Sprite {
 	public SpawnPoint(ArrayList<ArrayList<Integer>> waveSet, int waveDelay, ArrayList<WayPoint> path, float x, float y, VertexBufferObjectManager pVertexBufferObjectManager) {
         
 		// superconstructor
-		super(x, y, TowerDefense.spawnPointTextureRegion, pVertexBufferObjectManager);
+		super(x - (TEXTURE.getWidth() / 2), y - (TEXTURE.getHeight() / 2), TEXTURE, pVertexBufferObjectManager);
 		
-		// initialize variables
+		// set variables
+		mCenterX = getX() + (TEXTURE.getWidth() / 2);
+		mCenterY = getY() + (TEXTURE.getHeight() / 2);
 		mWaveSet = waveSet;
 		mCurrentWave = 0;
         mWaveDelay = waveDelay;
@@ -81,9 +89,9 @@ public class SpawnPoint extends Sprite {
 		// determine which enemy was requested and spawn it
 		switch (enemyCode) {
 		case TowerDefense.ENEMY_TEST:
-			Enemy enemy = new TestEnemy(mPath, getX() + (long) (Math.random()*20-10), getY() + (long) (Math.random()*20-10), getVertexBufferObjectManager());
-			TowerDefense.spawnedEnemies.add(enemy);
-			TowerDefense.scene.attachChild(enemy);
+			Enemy enemy = new TestEnemy(mPath, mCenterX, mCenterY, getVertexBufferObjectManager());
+			TowerDefense.mLevel.spawnedEnemies.add(enemy);
+			TowerDefense.mLevel.mScene.attachChild(enemy);
 			break;
 		}
 		 
