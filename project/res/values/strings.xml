@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <string name="app_name">Tower Defense</string>
+    <string name="app_name">Castle Defense</string>
     <string name="menu_settings">Settings</string>
 
 </resources>

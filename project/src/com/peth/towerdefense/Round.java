@@ -80,7 +80,7 @@ public abstract class Round extends Sprite {
 			}
 			
 			setVisible(false);
-			//TODO detach self
+			setTag(TowerDefense.TAG_DETACHABLE);
 			
 		}
 		
@@ -107,6 +107,9 @@ class TestRound extends Round {
 		mTarget = target;
 		mSpeed = SPEED;
 		mDamage = DAMAGE;
+		
+		// play sound
+		TowerDefense.SOUND_ARROW.play();
 		
 	}
 	
@@ -143,7 +146,7 @@ class FireRound extends Round {
 	// constants
 	public static final int TYPE = Tower.ROUND_FIRE;
 	public static final int SPEED = 5;
-	public static final double DAMAGE = 0.5;
+	public static final double DAMAGE = 0.2;
 	public static final ITextureRegion TEXTURE = TowerDefense.TEXTURE_ROUND_FIRE;
 	
 	// constructor

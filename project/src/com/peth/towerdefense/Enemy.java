@@ -16,7 +16,7 @@ public class Enemy extends Sprite {
 	public static final int STATE_DEAD = 0;
 	public static final int STATE_NORMAL = 1;
 	public static final int STATE_SLOW = 2;
-	public static final int DURATION_SLOW = 500;
+	public static final int DURATION_SLOW = 300;
 	
 	// globals
 	public float mCenterX;
@@ -126,9 +126,14 @@ public class Enemy extends Sprite {
 	public synchronized void die() {
 		
 		if (mState != STATE_DEAD) {
-		
+			
+			// play death cry
+			int random = (int) (Math.random() * TowerDefense.SOUND_DEATHCRY.size());
+			TowerDefense.SOUND_DEATHCRY.get(random).play();
+			
 			// set state to dead
 			mState = STATE_DEAD;
+			TowerDefense.mLevel.mEnemiesFinished++;
 			
 			// gain stuff
 			TowerDefense.mLevel.mCoins += mCoins;
@@ -136,19 +141,23 @@ public class Enemy extends Sprite {
 			
 			// remove enemy
 			setVisible(false);
-			//TODO detach self
+			setTag(TowerDefense.TAG_DETACHABLE);
+			
 		}
 		
 	}
 	
 	public void finish() {
 		
+		// set state to dead
+		mState = STATE_DEAD;
+		TowerDefense.mLevel.mEnemiesFinished++;
+		
 		// player takes damage
 		TowerDefense.mLevel.getDamage(1);
 		
 		// remove enemy
-		setVisible(false);
-		//TODO detach self
+		setTag(TowerDefense.TAG_DETACHABLE);
 		
 	}
 	
@@ -158,18 +167,14 @@ public class Enemy extends Sprite {
 		mHealth -= damage;
 		
 		// set opacity (temporary form of health bar)
-		setAlpha(Math.max((float) 0.1, (float) mHealth / mMaxHealth));
+		//setAlpha(Math.max((float) 0.1, (float) mHealth / mMaxHealth));
 		
 		// die if health is too low
 		if (mHealth <= 0) {
-			
 			die();
-			
-		// else inflict the effect
 		} else {
-			
+			// else inflict the effect
 			inflict(effectCode);
-			
 		}
 		
 	}
@@ -196,9 +201,9 @@ public class Enemy extends Sprite {
 
 class TestEnemy extends Enemy {
 	
-	public static float MAX_HEALTH = 80;
-	public static float SPEED = 2;
-	public static int COINS = 10;
+	public static float MAX_HEALTH = 45;
+	public static float SPEED = (float) 1;
+	public static int COINS = 3;
 	public static int POINTS = 10;
 	public static final ITextureRegion TEXTURE = TowerDefense.TEXTURE_ENEMY_TEST;
 	

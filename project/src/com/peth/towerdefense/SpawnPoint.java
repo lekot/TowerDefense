@@ -20,11 +20,10 @@ public class SpawnPoint extends Sprite {
 	public float mCenterX;
 	public float mCenterY;
 	public ArrayList<ArrayList<Integer>> mWaveSet;
-	int mCurrentWave;
 	public int mWaveDelay;
 	public ArrayList<WayPoint> mPath;
-	public Timer waveTimer;
-	public Timer spawnTimer;
+	public Timer mWaveTimer;
+	public boolean mActive = true;
 	
 	public SpawnPoint(ArrayList<ArrayList<Integer>> waveSet, int waveDelay, ArrayList<WayPoint> path, float x, float y, VertexBufferObjectManager pVertexBufferObjectManager) {
         
@@ -35,7 +34,6 @@ public class SpawnPoint extends Sprite {
 		mCenterX = getX() + (TEXTURE.getWidth() / 2);
 		mCenterY = getY() + (TEXTURE.getHeight() / 2);
 		mWaveSet = waveSet;
-		mCurrentWave = 0;
         mWaveDelay = waveDelay;
         mPath = path;
         
@@ -43,8 +41,8 @@ public class SpawnPoint extends Sprite {
      	setVisible(false);
         
         // start timer
-        waveTimer = new Timer();
-        waveTimer.schedule(new WaveTask(), TowerDefense.START_DELAY, mWaveDelay);
+        mWaveTimer = new Timer();
+        mWaveTimer.schedule(new WaveTask(), TowerDefense.START_DELAY, mWaveDelay);
     }
 	
 	class WaveTask extends TimerTask {
@@ -52,13 +50,17 @@ public class SpawnPoint extends Sprite {
 		@Override
 		public void run() {
 			
-			if (mCurrentWave < mWaveSet.size()) {
+			if (TowerDefense.mLevel.mWaveCurrent < mWaveSet.size()) {
+				
+				TowerDefense.mLevel.mWaveCurrent++;
 				
 				// get current wave
-				ArrayList<Integer> currentWave = mWaveSet.get(mCurrentWave);
+				ArrayList<Integer> currentWave = mWaveSet.get(TowerDefense.mLevel.mWaveCurrent - 1);
 				
 				// spawn the enemies
 				for (int i = 0; i < currentWave.size(); i++) {
+					
+					if (!mActive) break;
 					
 					// spawn an enemy
 					spawn(currentWave.get(i));
@@ -71,12 +73,10 @@ public class SpawnPoint extends Sprite {
 					}
 				}
 				
-				mCurrentWave++;
-				
 			} else {
 				
 				// the SpawnPoint has launched all its waves, deactivate the timer
-				waveTimer.cancel();
+				mWaveTimer.cancel();
 			}
 			
 		}
@@ -90,7 +90,7 @@ public class SpawnPoint extends Sprite {
 		switch (enemyCode) {
 		case TowerDefense.ENEMY_TEST:
 			Enemy enemy = new TestEnemy(mPath, mCenterX, mCenterY, getVertexBufferObjectManager());
-			TowerDefense.mLevel.spawnedEnemies.add(enemy);
+			TowerDefense.mLevel.mCurrentEnemies.add(enemy);
 			TowerDefense.mLevel.mScene.attachChild(enemy);
 			break;
 		}

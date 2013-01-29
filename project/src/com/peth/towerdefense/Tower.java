@@ -18,6 +18,8 @@ public abstract class Tower extends Sprite {
 	// globals
 	public float mCenterX;
 	public float mCenterY;
+	public float mOffsetX;
+	public float mOffsetY;
 	public float mRange;
 	public int mRound;
 	public int mDelay;
@@ -25,7 +27,7 @@ public abstract class Tower extends Sprite {
 	public Enemy mTarget;
 	
 	// constructor
-	public Tower(float x, float y, ITextureRegion texture, VertexBufferObjectManager pVertexBufferObjectManager) {
+	public Tower(float x, float y, float offsetX, float offsetY, ITextureRegion texture, VertexBufferObjectManager pVertexBufferObjectManager) {
 		
 		// superconstructor
 		super(x - (texture.getWidth() / 2), y - (texture.getHeight() / 2), texture, pVertexBufferObjectManager);
@@ -33,6 +35,8 @@ public abstract class Tower extends Sprite {
 		// set variables
 		mCenterX = getX() + (texture.getWidth() / 2);
 		mCenterY = getY() + (texture.getHeight() / 2);
+		mOffsetX = offsetX;
+		mOffsetY = offsetY;
 		
 		// start scanning for enemies
 		Thread scanThread = new Thread(new ScanTask());
@@ -61,7 +65,7 @@ public abstract class Tower extends Sprite {
 						if (inRange(mTarget)) {
 							
 							// rotate sprite towards enemy
-							setRotation(getDirection(mTarget));
+							//setRotation(getDirection(mTarget));
 							
 							// fire!
 							fireRound(mRound);
@@ -96,15 +100,15 @@ public abstract class Tower extends Sprite {
 		case SCAN_FIRST:
 			
 			// loop through all enemies
-			for (int i = 0; i < TowerDefense.mLevel.spawnedEnemies.size(); i++) {
+			for (int i = 0; i < TowerDefense.mLevel.mCurrentEnemies.size(); i++) {
 				
-				Enemy potentialTarget = TowerDefense.mLevel.spawnedEnemies.get(i);
+				Enemy potentialTarget = TowerDefense.mLevel.mCurrentEnemies.get(i);
 				
 				// check if enemy is targetable
 				if (!potentialTarget.isDead() && inRange(potentialTarget)) {
 					
 					// set the enemy as the target and stop scanning
-					mTarget = TowerDefense.mLevel.spawnedEnemies.get(i);
+					mTarget = TowerDefense.mLevel.mCurrentEnemies.get(i);
 					break;
 					
 				}
@@ -115,15 +119,15 @@ public abstract class Tower extends Sprite {
 		case SCAN_FIRST_NOT_SLOW:
 			
 			// loop through all enemies
-			for (int i = 0; i < TowerDefense.mLevel.spawnedEnemies.size(); i++) {
+			for (int i = 0; i < TowerDefense.mLevel.mCurrentEnemies.size(); i++) {
 				
-				Enemy potentialTarget = TowerDefense.mLevel.spawnedEnemies.get(i);
+				Enemy potentialTarget = TowerDefense.mLevel.mCurrentEnemies.get(i);
 				
 				// check if enemy is targetable
 				if (!potentialTarget.isDead() && inRange(potentialTarget) && !potentialTarget.isSlow()) {
 					
 					// set the enemy as the target and stop scanning
-					mTarget = TowerDefense.mLevel.spawnedEnemies.get(i);
+					mTarget = TowerDefense.mLevel.mCurrentEnemies.get(i);
 					break;
 					
 				}
@@ -156,15 +160,15 @@ public abstract class Tower extends Sprite {
 		
 		switch (roundCode) {
 		case ROUND_TEST:
-			Round testRound = new TestRound(mTarget, mCenterX, mCenterY, getVertexBufferObjectManager());
+			Round testRound = new TestRound(mTarget, mCenterX + mOffsetX, mCenterY + mOffsetY, getVertexBufferObjectManager());
 			TowerDefense.mLevel.mScene.attachChild(testRound);
 			break;
 		case ROUND_SLOW:
-			Round slowRound = new SlowRound(mTarget, mCenterX, mCenterY, getVertexBufferObjectManager());
+			Round slowRound = new SlowRound(mTarget, mCenterX + mOffsetX, mCenterY + mOffsetY, getVertexBufferObjectManager());
 			TowerDefense.mLevel.mScene.attachChild(slowRound);
 			break;
 		case ROUND_FIRE:
-			Round fireRound = new FireRound(mTarget, mCenterX, mCenterY, getVertexBufferObjectManager());
+			Round fireRound = new FireRound(mTarget, mCenterX + mOffsetX, mCenterY + mOffsetY, getVertexBufferObjectManager());
 			TowerDefense.mLevel.mScene.attachChild(fireRound);
 			break;
 		}
@@ -176,9 +180,11 @@ public abstract class Tower extends Sprite {
 class TestTower extends Tower {
 	
 	// constants
-	public static final int PRICE = 120;
+	public static final int OFFSET_X = 0;
+	public static final int OFFSET_Y = -30;
+	public static final int PRICE = 70;
 	public static final int RANGE = 120;
-	public static final int DELAY = 250;
+	public static final int DELAY = 800;
 	public static final int ROUND = ROUND_TEST;
 	public static final int SCAN_METHOD = SCAN_FIRST;
 	public static final ITextureRegion TEXTURE = TowerDefense.TEXTURE_TOWER_TEST;
@@ -186,7 +192,7 @@ class TestTower extends Tower {
 	public TestTower(float x, float y, VertexBufferObjectManager pVertexBufferObjectManager) {
 		
 		// superconstructor
-		super(x, y, TEXTURE, pVertexBufferObjectManager);
+		super(x, y, OFFSET_X, OFFSET_Y, TEXTURE, pVertexBufferObjectManager);
 		
 		// set variables
 		mRange = RANGE;
@@ -201,8 +207,10 @@ class TestTower extends Tower {
 class SlowTower extends Tower {
 	
 	// constants
-	public static final int PRICE = 240;
-	public static final int RANGE = 80;
+	public static final int OFFSET_X = 0;
+	public static final int OFFSET_Y = -30;
+	public static final int PRICE = 70;
+	public static final int RANGE = 100;
 	public static final int DELAY = 2000;
 	public static final int ROUND = ROUND_SLOW;
 	public static final int SCAN_METHOD = SCAN_FIRST_NOT_SLOW;
@@ -211,7 +219,7 @@ class SlowTower extends Tower {
 	public SlowTower(float x, float y, VertexBufferObjectManager pVertexBufferObjectManager) {
 		
 		// superconstructor
-		super(x, y, TEXTURE, pVertexBufferObjectManager);
+		super(x, y, OFFSET_X, OFFSET_Y, TEXTURE, pVertexBufferObjectManager);
 		
 		// set variables
 		mRange = RANGE;
@@ -226,8 +234,10 @@ class SlowTower extends Tower {
 class FireTower extends Tower {
 	
 	// constants
-	public static final int PRICE = 300;
-	public static final int RANGE = 120;
+	public static final int OFFSET_X = 0;
+	public static final int OFFSET_Y = -30;
+	public static final int PRICE = 120;
+	public static final int RANGE = 100;
 	public static final int DELAY = 5;
 	public static final int ROUND = ROUND_FIRE;
 	public static final int SCAN_METHOD = SCAN_FIRST;
@@ -236,7 +246,7 @@ class FireTower extends Tower {
 	public FireTower(float x, float y, VertexBufferObjectManager pVertexBufferObjectManager) {
 		
 		// superconstructor
-		super(x, y, TEXTURE, pVertexBufferObjectManager);
+		super(x, y, OFFSET_X, OFFSET_Y, TEXTURE, pVertexBufferObjectManager);
 		
 		// set variables
 		mRange = RANGE;

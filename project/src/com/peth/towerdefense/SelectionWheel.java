@@ -19,7 +19,7 @@ public class SelectionWheel extends Sprite {
 	// globals
 	public float mCenterX;
 	public float mCenterY;
-	public float mRadius = 70; // change this according the texture used
+	public float mRadius = 52; // change this according the texture used
 	public Entity mParent;
 	public int mSelection = -1;
 	public ArrayList<Option> mOptions;
@@ -44,7 +44,7 @@ public class SelectionWheel extends Sprite {
 			for (int i = 0; i < optionCodes.size(); i++) {
 				
 				// determine position
-				double angle = Math.toRadians(((double) 360 / optionCodes.size()) * i);
+				double angle = Math.toRadians(((double) 360 / optionCodes.size()) * i - 45);
 				float xPos = (float) (mCenterX + (Math.sin(angle) * mRadius));
 				float yPos = (float) (mCenterY - (Math.cos(angle) * mRadius));
 				
@@ -65,6 +65,11 @@ public class SelectionWheel extends Sprite {
 					mOptions.add(fireTowerOption);
 					TowerDefense.mLevel.mScene.attachChild(fireTowerOption);
 					break;
+				case BasePoint.TOWER_BOMB:
+					Option bombTowerOption = new LockedOption(xPos, yPos, mParent, getVertexBufferObjectManager());
+					mOptions.add(bombTowerOption);
+					TowerDefense.mLevel.mScene.attachChild(bombTowerOption);
+					break;
 				}
 				
 			}
@@ -77,12 +82,11 @@ public class SelectionWheel extends Sprite {
 		
 		for (int i = 0; i < mOptions.size(); i++) {
 			mOptions.get(i).setVisible(false);
-			//TODO unregister touch areas
-			//TODO detach option
+			mOptions.get(i).setTag(TowerDefense.TAG_DETACHABLE);
 		}
 		
 		setVisible(false);
-		//TODO detach self
+		setTag(TowerDefense.TAG_DETACHABLE);
 		
 	}
 	

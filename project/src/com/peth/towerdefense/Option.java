@@ -47,7 +47,7 @@ public class Option extends Sprite {
 class TestTowerOption extends Option {
 	
 	// texture constants
-	public static final ITextureRegion TEXTURE = TowerDefense.TEXTURE_TOWER_TEST;
+	public static final ITextureRegion TEXTURE = TowerDefense.TEXTURE_OPTION_ARCHER;
 	
 	// option code constants
 	public static final int OPTION_CODE = BUILD_TOWER_TEST;
@@ -65,7 +65,7 @@ class TestTowerOption extends Option {
 class SlowTowerOption extends Option {
 	
 	// texture constants
-	public static final ITextureRegion TEXTURE = TowerDefense.TEXTURE_TOWER_SLOW;
+	public static final ITextureRegion TEXTURE = TowerDefense.TEXTURE_OPTION_INFANTRY;
 
 	// option code constants
 	public static final int OPTION_CODE = BUILD_TOWER_SLOW;
@@ -83,13 +83,31 @@ class SlowTowerOption extends Option {
 class FireTowerOption extends Option {
 	
 	// texture constants
-	public static final ITextureRegion TEXTURE = TowerDefense.TEXTURE_TOWER_FIRE;
+	public static final ITextureRegion TEXTURE = TowerDefense.TEXTURE_OPTION_MAGICIAN;
 
 	// option code constants
 	public static final int OPTION_CODE = BUILD_TOWER_FIRE;
 	
 	// constructor
 	public FireTowerOption(float x, float y, Entity parent, VertexBufferObjectManager pVertexBufferObjectManager) {
+		
+		// superconstructor
+		super(x, y, parent, TEXTURE, OPTION_CODE, pVertexBufferObjectManager);
+		
+	}
+	
+}
+
+class LockedOption extends Option {
+	
+	// texture constants
+	public static final ITextureRegion TEXTURE = TowerDefense.TEXTURE_OPTION_LOCKED;
+
+	// option code constants
+	public static final int OPTION_CODE = -1;
+	
+	// constructor
+	public LockedOption(float x, float y, Entity parent, VertexBufferObjectManager pVertexBufferObjectManager) {
 		
 		// superconstructor
 		super(x, y, parent, TEXTURE, OPTION_CODE, pVertexBufferObjectManager);

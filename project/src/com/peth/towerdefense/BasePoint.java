@@ -14,6 +14,7 @@ public class BasePoint extends Sprite {
 	public static final int TOWER_TEST = 0;
 	public static final int TOWER_SLOW = 1;
 	public static final int TOWER_FIRE = 2;
+	public static final int TOWER_BOMB = 3;
 	
 	// globals
 	public float mCenterX;
