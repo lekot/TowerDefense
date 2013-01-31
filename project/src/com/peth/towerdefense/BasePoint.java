@@ -10,17 +10,10 @@ public class BasePoint extends Sprite {
 	// texture constants
 	public static final ITextureRegion TEXTURE = TowerDefense.TEXTURE_BASEPOINT;
 	
-	// tower constants
-	public static final int TOWER_TEST = 0;
-	public static final int TOWER_SLOW = 1;
-	public static final int TOWER_FIRE = 2;
-	public static final int TOWER_BOMB = 3;
-	
 	// globals
 	public float mCenterX;
 	public float mCenterY;
 	public Tower mCurrentTower = null;
-	public SelectionWheel mSelectionWheel;
 	
 	public BasePoint(float x, float y, VertexBufferObjectManager pVertexBufferObjectManager) {
 		
@@ -28,6 +21,7 @@ public class BasePoint extends Sprite {
 		super(x - (TEXTURE.getWidth() / 2), y - (TEXTURE.getHeight() / 2), TEXTURE, pVertexBufferObjectManager);
 		
 		// set variables
+		setZIndex(TowerDefense.ZINDEX_BASEPOINTS);
 		mCenterX = getX() + (TEXTURE.getWidth() / 2);
 		mCenterY = getY() + (TEXTURE.getHeight() / 2);
 		
@@ -40,11 +34,11 @@ public class BasePoint extends Sprite {
     public boolean onAreaTouched(TouchEvent pSceneTouchEvent, float pTouchAreaLocalX, float pTouchAreaLocalY) {
         
 		if (pSceneTouchEvent.getAction() == TouchEvent.ACTION_DOWN) {
-			if (mCurrentTower == null) {
-				if (mSelectionWheel == null) {
-					showSelectionWheel();
+			if (mCurrentTower == null) { //TODO instead of using this check, unregister the basepoint's touch area when a tower is built on it, and re-register it when its tower is sold
+				if (TowerDefense.mLevel.mSelectionWheel != null && TowerDefense.mLevel.mSelectionWheel.mParent == this) {
+					TowerDefense.mLevel.mSelectionWheel.hide();
 				} else {
-					hideSelectionWheel();
+					showSelectionWheel();
 				}
 			}
 		}
@@ -53,24 +47,27 @@ public class BasePoint extends Sprite {
 	
 	public void buildTower(int towerCode) {
 		
+		TowerDefense.SOUND_TOWER_BUILD.play();
+		
+		//TODO take money-check out of here and put it in the options check
 		switch (towerCode) {
-		case TOWER_TEST:
+		case Tower.TOWER_TEST:
 			if (TowerDefense.mLevel.mCoins >= TestTower.PRICE) {
-				mCurrentTower = new TestTower(mCenterX, mCenterY, getVertexBufferObjectManager());
+				mCurrentTower = new TestTower(this, getVertexBufferObjectManager());
 				TowerDefense.mLevel.mScene.attachChild(mCurrentTower);
 				TowerDefense.mLevel.mCoins -= TestTower.PRICE;
 			}
 			break;
-		case TOWER_SLOW:
+		case Tower.TOWER_SLOW:
 			if (TowerDefense.mLevel.mCoins >= SlowTower.PRICE) {
-				mCurrentTower = new SlowTower(mCenterX, mCenterY, getVertexBufferObjectManager());
+				mCurrentTower = new SlowTower(this, getVertexBufferObjectManager());
 				TowerDefense.mLevel.mScene.attachChild(mCurrentTower);
 				TowerDefense.mLevel.mCoins -= SlowTower.PRICE;
 			}
 			break;
-		case TOWER_FIRE:
+		case Tower.TOWER_FIRE:
 			if (TowerDefense.mLevel.mCoins >= FireTower.PRICE) {
-				mCurrentTower = new FireTower(mCenterX, mCenterY, getVertexBufferObjectManager());
+				mCurrentTower = new FireTower(this, getVertexBufferObjectManager());
 				TowerDefense.mLevel.mScene.attachChild(mCurrentTower);
 				TowerDefense.mLevel.mCoins -= FireTower.PRICE;
 			}
@@ -81,17 +78,8 @@ public class BasePoint extends Sprite {
 	
 	public void showSelectionWheel() {
 		
-		mSelectionWheel = new SelectionWheel(mCenterX, mCenterY, this, SelectionWheel.TYPE_BASE, TowerDefense.mLevel.mAvailableTowers, getVertexBufferObjectManager());
-		TowerDefense.mLevel.mScene.attachChild(mSelectionWheel);
-		
-	}
-	
-	public void hideSelectionWheel() {
-		
-		if (mSelectionWheel != null) {
-			mSelectionWheel.hide();
-			mSelectionWheel = null;
-		}
+		if (TowerDefense.mLevel.mSelectionWheel != null) TowerDefense.mLevel.mSelectionWheel.hide();
+		TowerDefense.mLevel.mSelectionWheel = new SelectionWheel(mCenterX, mCenterY, this, SelectionWheel.TYPE_BASE, TowerDefense.mLevel.mAvailableTowers, getVertexBufferObjectManager());
 		
 	}
 	

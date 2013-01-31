@@ -4,7 +4,13 @@ import org.andengine.entity.sprite.Sprite;
 import org.andengine.opengl.texture.region.ITextureRegion;
 import org.andengine.opengl.vbo.VertexBufferObjectManager;
 
+//TODO rename this class Projectile
 public abstract class Round extends Sprite {
+	
+	// round constants
+	public static final int ROUND_TEST = 0;
+	public static final int ROUND_SLOW = 1;
+	public static final int ROUND_FIRE = 2;
 	
 	// effect constants
 	public static final int EFFECT_NONE = 0;
@@ -18,6 +24,7 @@ public abstract class Round extends Sprite {
 	public float mSpeed;
 	public double mDamage;
 	public int mEffect = EFFECT_NONE;
+	public Thread mMoveThread;
 	
 	// constructor
 	public Round(float x, float y, ITextureRegion texture, VertexBufferObjectManager pVertexBufferObjectManager) {
@@ -26,12 +33,13 @@ public abstract class Round extends Sprite {
 		super(x - (texture.getWidth() / 2), y - (texture.getHeight() / 2), texture, pVertexBufferObjectManager);
 		
 		// set variables
+		setZIndex(TowerDefense.ZINDEX_ROUNDS);
 		mCenterX = getX() + (texture.getWidth() / 2);
 		mCenterY = getY() + (texture.getHeight() / 2);
 		
 		// start scanning for enemies
-		Thread moveThread = new Thread(new MoveTask());
-		moveThread.start();
+		mMoveThread = new Thread(new MoveTask());
+		mMoveThread.start();
 		
 	}
 	
@@ -61,7 +69,7 @@ public abstract class Round extends Sprite {
 				mCenterY += dY;
 				
 				// increase size of the sprite if it is a fire bullet
-				if (mType == Tower.ROUND_FIRE) {
+				if (mType == ROUND_FIRE) {
 					setScale(Math.min(5, (float) (getScaleX() + 0.2)));
 				}
 				
@@ -91,7 +99,7 @@ public abstract class Round extends Sprite {
 class TestRound extends Round {
 	
 	// constants
-	public static final int TYPE = Tower.ROUND_TEST;
+	public static final int TYPE = ROUND_TEST;
 	public static final int SPEED = 5;
 	public static final double DAMAGE = 15;
 	public static final ITextureRegion TEXTURE = TowerDefense.TEXTURE_ROUND_TEST;
@@ -109,7 +117,7 @@ class TestRound extends Round {
 		mDamage = DAMAGE;
 		
 		// play sound
-		TowerDefense.SOUND_ARROW.play();
+		TowerDefense.SOUND_PROJECTILE_ARROW.play();
 		
 	}
 	
@@ -118,7 +126,7 @@ class TestRound extends Round {
 class SlowRound extends Round {
 	
 	// constants
-	public static final int TYPE = Tower.ROUND_SLOW;
+	public static final int TYPE = ROUND_SLOW;
 	public static final int SPEED = 5;
 	public static final float DAMAGE = 0;
 	public static final ITextureRegion TEXTURE = TowerDefense.TEXTURE_ROUND_SLOW;
@@ -144,7 +152,7 @@ class SlowRound extends Round {
 class FireRound extends Round {
 	
 	// constants
-	public static final int TYPE = Tower.ROUND_FIRE;
+	public static final int TYPE = ROUND_FIRE;
 	public static final int SPEED = 5;
 	public static final double DAMAGE = 0.2;
 	public static final ITextureRegion TEXTURE = TowerDefense.TEXTURE_ROUND_FIRE;

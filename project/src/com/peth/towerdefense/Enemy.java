@@ -1,11 +1,16 @@
 package com.peth.towerdefense;
 
 import java.util.ArrayList;
+
+import org.andengine.entity.primitive.Rectangle;
 import org.andengine.entity.sprite.Sprite;
 import org.andengine.opengl.texture.region.ITextureRegion;
 import org.andengine.opengl.vbo.VertexBufferObjectManager;
 
 public class Enemy extends Sprite {
+	
+	// enemy constants
+	public static final int ENEMY_TEST = 0;
 	
 	// speed constants
 	public static final double SPEED_SLOW = 0.5;
@@ -18,6 +23,11 @@ public class Enemy extends Sprite {
 	public static final int STATE_SLOW = 2;
 	public static final int DURATION_SLOW = 300;
 	
+	// health bar constants
+	private static final float HEALTHBAR_WIDTH = 15;
+	private static final float HEALTHBAR_HEIGHT = 1;
+	private static final float HEALTHBAR_YOFFSET = 15;
+	
 	// globals
 	public float mCenterX;
 	public float mCenterY;
@@ -28,28 +38,45 @@ public class Enemy extends Sprite {
 	public float mHealth;
 	public double mSpeed;
 	public double mSpeedFactor;
-	public int mScore;
 	public int mCoins;
 	public WayPoint mTarget;
 	public int mCurrentTarget = 0;
 	public int mState = STATE_NORMAL;
 	public int mSlowCount = 0;
+	public Rectangle mHealthBarBorder;
+	public Rectangle mHealthBarBackground;
+	public Rectangle mHealthBarForeground;
+	public Thread mMoveThread;
 	
+	// constructor
 	public Enemy(ArrayList<WayPoint> path, float x, float y, ITextureRegion texture, VertexBufferObjectManager pVertexBufferObjectManager) {
 				
 		// superconstructor
 		super(x - (texture.getWidth() / 2), y - (texture.getHeight() / 2), texture, pVertexBufferObjectManager);
 		
 		// set variables
+		setZIndex(TowerDefense.ZINDEX_ENEMIES);
 		mCenterX = getX() + (texture.getWidth() / 2);
 		mCenterY = getY() + (texture.getHeight() / 2);
 		mPath = path;
 		mTarget = mPath.get(mCurrentTarget);
 		mSpeedFactor = SPEED_NORMAL;
+		mHealthBarBorder = new Rectangle(mCenterX - HEALTHBAR_WIDTH / 2 - 1, mCenterY - HEALTHBAR_YOFFSET - 1, HEALTHBAR_WIDTH + 2, HEALTHBAR_HEIGHT + 2, getVertexBufferObjectManager());
+		mHealthBarBorder.setColor(0.3f, 0.3f, 0.3f);
+		mHealthBarBorder.setZIndex(800);
+		TowerDefense.mLevel.mScene.attachChild(mHealthBarBorder);
+		mHealthBarBackground = new Rectangle(mCenterX - HEALTHBAR_WIDTH / 2, mCenterY - HEALTHBAR_YOFFSET, HEALTHBAR_WIDTH, HEALTHBAR_HEIGHT, getVertexBufferObjectManager());
+		mHealthBarBackground.setColor(220f/255, 25f/255, 25f/255);
+		mHealthBarBackground.setZIndex(801);
+		TowerDefense.mLevel.mScene.attachChild(mHealthBarBackground);
+		mHealthBarForeground = new Rectangle(mCenterX - HEALTHBAR_WIDTH / 2, mCenterY - HEALTHBAR_YOFFSET, HEALTHBAR_WIDTH, HEALTHBAR_HEIGHT, getVertexBufferObjectManager());
+		mHealthBarForeground.setColor(100f/255, 220f/255, 20f/255);
+		mHealthBarForeground.setZIndex(802);
+		TowerDefense.mLevel.mScene.attachChild(mHealthBarForeground);
 		
 		// start moving to target
-		Thread moveThread = new Thread(new MoveTask());
-		moveThread.start();
+		mMoveThread = new Thread(new MoveTask());
+		mMoveThread.start();
 		
 	}
 	
@@ -90,9 +117,7 @@ public class Enemy extends Sprite {
 					// otherwise move in direction of targeted waypoint
 					float dX = distX / dist * (float) mSpeed * (float) mSpeedFactor;
 					float dY = distY / dist * (float) mSpeed * (float) mSpeedFactor;
-					setPosition(getX() + dX, getY() + dY);
-					mCenterX += dX;
-					mCenterY += dY;
+					move(dX, dY);
 					
 					// then sleep for animation's sake
 					try {
@@ -123,41 +148,60 @@ public class Enemy extends Sprite {
 		
 	}
 	
+	public void move(float dX, float dY) {
+		
+		setPosition(getX() + dX, getY() + dY);
+		mCenterX += dX;
+		mCenterY += dY;
+		mHealthBarBorder.setPosition(mHealthBarBorder.getX() + dX, mHealthBarBorder.getY() + dY);
+		mHealthBarBackground.setPosition(mHealthBarBackground.getX() + dX, mHealthBarBackground.getY() + dY);
+		mHealthBarForeground.setPosition(mHealthBarForeground.getX() + dX, mHealthBarForeground.getY() + dY);
+		
+	}
+	
 	public synchronized void die() {
 		
 		if (mState != STATE_DEAD) {
 			
 			// play death cry
-			int random = (int) (Math.random() * TowerDefense.SOUND_DEATHCRY.size());
-			TowerDefense.SOUND_DEATHCRY.get(random).play();
-			
-			// set state to dead
-			mState = STATE_DEAD;
-			TowerDefense.mLevel.mEnemiesFinished++;
+			int random = (int) (Math.random() * TowerDefense.SOUND_ENEMY_DEATHCRY.size());
+			TowerDefense.SOUND_ENEMY_DEATHCRY.get(random).play();
 			
 			// gain stuff
 			TowerDefense.mLevel.mCoins += mCoins;
-			TowerDefense.mLevel.mScore += mScore;
 			
 			// remove enemy
-			setVisible(false);
-			setTag(TowerDefense.TAG_DETACHABLE);
+			removeEnemy();
 			
 		}
 		
 	}
 	
-	public void finish() {
-		
-		// set state to dead
+	public void removeEnemy() {
 		mState = STATE_DEAD;
 		TowerDefense.mLevel.mEnemiesFinished++;
+		
+		setVisible(false);
+		mHealthBarBorder.setVisible(false);
+		mHealthBarBackground.setVisible(false);
+		mHealthBarForeground.setVisible(false);
+		
+		setTag(TowerDefense.TAG_DETACHABLE);
+		mHealthBarBorder.setTag(TowerDefense.TAG_DETACHABLE);
+		mHealthBarBackground.setTag(TowerDefense.TAG_DETACHABLE);
+		mHealthBarForeground.setTag(TowerDefense.TAG_DETACHABLE);
+	}
+	
+	public void finish() {
+		
+		//TODO play a sound
+		TowerDefense.mVibrator.vibrate(20);
 		
 		// player takes damage
 		TowerDefense.mLevel.getDamage(1);
 		
 		// remove enemy
-		setTag(TowerDefense.TAG_DETACHABLE);
+		removeEnemy();
 		
 	}
 	
@@ -166,8 +210,10 @@ public class Enemy extends Sprite {
 		// enemy takes damage
 		mHealth -= damage;
 		
-		// set opacity (temporary form of health bar)
-		//setAlpha(Math.max((float) 0.1, (float) mHealth / mMaxHealth));
+		float percentage = mHealth / mMaxHealth;
+		
+		// update health bar
+		mHealthBarForeground.setWidth(HEALTHBAR_WIDTH * percentage);
 		
 		// die if health is too low
 		if (mHealth <= 0) {
@@ -197,6 +243,11 @@ public class Enemy extends Sprite {
 		return (mState == STATE_SLOW);
 	}
 	
+	@Override
+	public void onDetached() {
+		TowerDefense.mLevel.mCurrentEnemies.remove(this);
+	}
+	
 }
 
 class TestEnemy extends Enemy {
@@ -204,7 +255,6 @@ class TestEnemy extends Enemy {
 	public static float MAX_HEALTH = 45;
 	public static float SPEED = (float) 1;
 	public static int COINS = 3;
-	public static int POINTS = 10;
 	public static final ITextureRegion TEXTURE = TowerDefense.TEXTURE_ENEMY_TEST;
 	
 	public TestEnemy(ArrayList<WayPoint> path, float x, float y, VertexBufferObjectManager pVertexBufferObjectManager) {
@@ -217,7 +267,7 @@ class TestEnemy extends Enemy {
 		mHealth = MAX_HEALTH;
 		mSpeed = SPEED;
 		mCoins = COINS;
-		mScore = POINTS;
+		
 	}
 	
 }

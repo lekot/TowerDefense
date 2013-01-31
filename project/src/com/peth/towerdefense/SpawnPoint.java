@@ -1,9 +1,6 @@
 package com.peth.towerdefense;
 
 import java.util.ArrayList;
-import java.util.Timer;
-import java.util.TimerTask;
-
 import org.andengine.entity.sprite.Sprite;
 import org.andengine.opengl.texture.region.ITextureRegion;
 import org.andengine.opengl.vbo.VertexBufferObjectManager;
@@ -20,12 +17,10 @@ public class SpawnPoint extends Sprite {
 	public float mCenterX;
 	public float mCenterY;
 	public ArrayList<ArrayList<Integer>> mWaveSet;
-	public int mWaveDelay;
 	public ArrayList<WayPoint> mPath;
-	public Timer mWaveTimer;
 	public boolean mActive = true;
 	
-	public SpawnPoint(ArrayList<ArrayList<Integer>> waveSet, int waveDelay, ArrayList<WayPoint> path, float x, float y, VertexBufferObjectManager pVertexBufferObjectManager) {
+	public SpawnPoint(ArrayList<ArrayList<Integer>> waveSet, ArrayList<WayPoint> path, float x, float y, VertexBufferObjectManager pVertexBufferObjectManager) {
         
 		// superconstructor
 		super(x - (TEXTURE.getWidth() / 2), y - (TEXTURE.getHeight() / 2), TEXTURE, pVertexBufferObjectManager);
@@ -34,28 +29,22 @@ public class SpawnPoint extends Sprite {
 		mCenterX = getX() + (TEXTURE.getWidth() / 2);
 		mCenterY = getY() + (TEXTURE.getHeight() / 2);
 		mWaveSet = waveSet;
-        mWaveDelay = waveDelay;
         mPath = path;
         
         // set visibility
      	setVisible(false);
         
-        // start timer
-        mWaveTimer = new Timer();
-        mWaveTimer.schedule(new WaveTask(), TowerDefense.START_DELAY, mWaveDelay);
     }
 	
-	class WaveTask extends TimerTask {
-
-		@Override
-		public void run() {
+	public void launchWave(final int wave) {
+		
+		Thread waveThread = new Thread(new Runnable() {
 			
-			if (TowerDefense.mLevel.mWaveCurrent < mWaveSet.size()) {
-				
-				TowerDefense.mLevel.mWaveCurrent++;
+			@Override
+			public void run() {
 				
 				// get current wave
-				ArrayList<Integer> currentWave = mWaveSet.get(TowerDefense.mLevel.mWaveCurrent - 1);
+				ArrayList<Integer> currentWave = mWaveSet.get(wave);
 				
 				// spawn the enemies
 				for (int i = 0; i < currentWave.size(); i++) {
@@ -71,15 +60,14 @@ public class SpawnPoint extends Sprite {
 					} catch (InterruptedException e) {
 						e.printStackTrace();
 					}
+					
 				}
 				
-			} else {
-				
-				// the SpawnPoint has launched all its waves, deactivate the timer
-				mWaveTimer.cancel();
 			}
-			
-		}
+		
+		});
+		
+		waveThread.start();
 		
 	}
 	
@@ -88,7 +76,7 @@ public class SpawnPoint extends Sprite {
 		
 		// determine which enemy was requested and spawn it
 		switch (enemyCode) {
-		case TowerDefense.ENEMY_TEST:
+		case Enemy.ENEMY_TEST:
 			Enemy enemy = new TestEnemy(mPath, mCenterX, mCenterY, getVertexBufferObjectManager());
 			TowerDefense.mLevel.mCurrentEnemies.add(enemy);
 			TowerDefense.mLevel.mScene.attachChild(enemy);

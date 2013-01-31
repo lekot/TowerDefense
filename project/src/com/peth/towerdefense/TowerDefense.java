@@ -3,7 +3,8 @@ package com.peth.towerdefense;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
-import java.util.Date;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import org.andengine.audio.music.Music;
 import org.andengine.audio.music.MusicFactory;
@@ -30,11 +31,16 @@ import org.andengine.util.adt.io.in.IInputStreamOpener;
 import org.andengine.util.color.Color;
 import org.andengine.util.debug.Debug;
 
+import android.content.Context;
 import android.graphics.Typeface;
 import android.os.Bundle;
+import android.os.Vibrator;
 import android.view.Menu;
 
 public class TowerDefense extends SimpleBaseGameActivity {
+	
+	// background constants
+	public static ITextureRegion BACKGROUND_LEVEL_1;
 	
 	// texture constants
 	public static ITextureRegion TEXTURE_HUD_MAIN;
@@ -56,18 +62,27 @@ public class TowerDefense extends SimpleBaseGameActivity {
 	public static ITextureRegion TEXTURE_OPTION_MAGICIAN;
 	public static ITextureRegion TEXTURE_OPTION_INFANTRY;
 	public static ITextureRegion TEXTURE_OPTION_LOCKED;
+	public static ITextureRegion TEXTURE_OPTION_SELL;
 	
 	// game constants
+	public static final int STARTING_HEALTH = 20;
 	public static final int STARTING_COINS = 265;
-	public static final int MAX_HEALTH = 20;
-	public static final int START_DELAY = 5000;
-	public static final int WAVE_DELAY_NORMAL = 40000;
-	public static final int ENEMY_TEST = 0;
-	public static IUpdateHandler mUpdateHandler;
+	public static final int START_DELAY = 1000;
+	public static final int WAVE_DELAY = 40000;
+	public static final double SALE_RATIO = 0.5;
 	
 	// camera constants
 	private static final int CAMERA_WIDTH = 800;
 	private static final int CAMERA_HEIGHT = 480;
+	
+	// z-index constants
+	public static final int ZINDEX_BACKGROUND = 0;
+	public static final int ZINDEX_BASEPOINTS = 100;
+	public static final int ZINDEX_TOWERS = 200;
+	public static final int ZINDEX_ENEMIES = 300;
+	public static final int ZINDEX_ROUNDS = 400;
+	public static final int ZINDEX_HEALTHBARS = 900;
+	public static final int ZINDEX_GUI = 1000;
 	
 	// tag constants
 	public static final int TAG_DETACHABLE = -1;
@@ -77,20 +92,22 @@ public class TowerDefense extends SimpleBaseGameActivity {
 	public static IFont FONT_SMALL;
 	
 	// sound constants
-	public static Sound SOUND_ARROW;
+	public static Sound SOUND_PROJECTILE_ARROW;
+	public static Sound SOUND_TOWER_BUILD;
+	public static Sound SOUND_TOWER_SELL;
 	public static Sound SOUND_VICTORY;
-	public static ArrayList<Sound> SOUND_DEATHCRY = new ArrayList<Sound>();
+	public static ArrayList<Sound> SOUND_ENEMY_DEATHCRY = new ArrayList<Sound>();
 	
 	// music constants
 	public static Music MUSIC_THEME_1;
 	
 	// misc globals
-	private ITextureRegion mBackgroundTextureRegion;
+	public static TowerDefense mLevel;
+	public static Vibrator mVibrator;
+	
+	private Sprite mBackground;
 	public Sprite mMainHud;
 	public Sprite mSkillsHud;
-	public static TowerDefense mLevel;
-	public int mScore;
-	public Date mTime;
 	public int mWavesTotal;
 	public int mWaveCurrent;
 	public int mEnemiesFinished = -1;
@@ -98,6 +115,10 @@ public class TowerDefense extends SimpleBaseGameActivity {
 	public int mCoins;
 	private int mHealth;
 	public ArrayList<Integer> mAvailableTowers = new ArrayList<Integer>();
+	public ArrayList<Enemy> mCurrentEnemies = new ArrayList<Enemy>();
+	private IUpdateHandler mUpdateHandler;
+	private Timer mWaveTimer;
+	public SelectionWheel mSelectionWheel;
 	
 	// scene globals
 	public Scene mScene;
@@ -148,6 +169,7 @@ public class TowerDefense extends SimpleBaseGameActivity {
 	// spawn point globals
 	public ArrayList<SpawnPoint> mSpawnPoints = new ArrayList<SpawnPoint>();
 	public SpawnPoint mSpawnPoint1;
+	public SpawnPoint mSpawnPoint2;
 	
 	// base point globals
 	public BasePoint mBasePoint1;
@@ -164,9 +186,6 @@ public class TowerDefense extends SimpleBaseGameActivity {
 	public Text mCoinsText;
 	public Text mWavesText;
 	
-	// enemy globals
-	public ArrayList<Enemy> mCurrentEnemies = new ArrayList<Enemy>();
-	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		
@@ -175,14 +194,13 @@ public class TowerDefense extends SimpleBaseGameActivity {
 		
 		// initialize variables
 		mLevel = new TowerDefense();
-		mLevel.mScore = 0;
-		mLevel.mTime = new Date();
 		mLevel.mCoins = STARTING_COINS;
-		mLevel.mHealth = MAX_HEALTH;
-		mLevel.mAvailableTowers.add(BasePoint.TOWER_TEST);
-		mLevel.mAvailableTowers.add(BasePoint.TOWER_SLOW);
-		mLevel.mAvailableTowers.add(BasePoint.TOWER_FIRE);
-		mLevel.mAvailableTowers.add(BasePoint.TOWER_BOMB);
+		mLevel.mHealth = STARTING_HEALTH;
+		mLevel.mAvailableTowers.add(Tower.TOWER_TEST);
+		mLevel.mAvailableTowers.add(Tower.TOWER_SLOW);
+		mLevel.mAvailableTowers.add(Tower.TOWER_FIRE);
+		mLevel.mAvailableTowers.add(Tower.TOWER_BOMB);
+		mVibrator = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
 		
 	}
 
@@ -220,16 +238,18 @@ public class TowerDefense extends SimpleBaseGameActivity {
 			
 			// set up sounds
 			SoundFactory.setAssetBasePath("sfx/");
-			TowerDefense.SOUND_ARROW = SoundFactory.createSoundFromAsset(mEngine.getSoundManager(), this, "arrow.wav");
+			TowerDefense.SOUND_PROJECTILE_ARROW = SoundFactory.createSoundFromAsset(mEngine.getSoundManager(), this, "projectile_arrow.wav");
 			TowerDefense.SOUND_VICTORY = SoundFactory.createSoundFromAsset(mEngine.getSoundManager(), this, "victory.wav");
-			Sound deathCry1 = SoundFactory.createSoundFromAsset(mEngine.getSoundManager(), this, "deathcry_1.wav");
-			Sound deathCry2 = SoundFactory.createSoundFromAsset(mEngine.getSoundManager(), this, "deathcry_2.wav");
-			Sound deathCry3 = SoundFactory.createSoundFromAsset(mEngine.getSoundManager(), this, "deathcry_3.wav");
-			Sound deathCry4 = SoundFactory.createSoundFromAsset(mEngine.getSoundManager(), this, "deathcry_4.wav");
-			TowerDefense.SOUND_DEATHCRY.add(deathCry1);
-			TowerDefense.SOUND_DEATHCRY.add(deathCry2);
-			TowerDefense.SOUND_DEATHCRY.add(deathCry3);
-			TowerDefense.SOUND_DEATHCRY.add(deathCry4);
+			TowerDefense.SOUND_TOWER_BUILD = SoundFactory.createSoundFromAsset(mEngine.getSoundManager(), this, "tower_build.wav");
+			TowerDefense.SOUND_TOWER_SELL = SoundFactory.createSoundFromAsset(mEngine.getSoundManager(), this, "tower_sell.wav");
+			Sound deathCry1 = SoundFactory.createSoundFromAsset(mEngine.getSoundManager(), this, "enemy_deathcry1.wav");
+			Sound deathCry2 = SoundFactory.createSoundFromAsset(mEngine.getSoundManager(), this, "enemy_deathcry2.wav");
+			Sound deathCry3 = SoundFactory.createSoundFromAsset(mEngine.getSoundManager(), this, "enemy_deathcry3.wav");
+			Sound deathCry4 = SoundFactory.createSoundFromAsset(mEngine.getSoundManager(), this, "enemy_deathcry4.wav");
+			TowerDefense.SOUND_ENEMY_DEATHCRY.add(deathCry1);
+			TowerDefense.SOUND_ENEMY_DEATHCRY.add(deathCry2);
+			TowerDefense.SOUND_ENEMY_DEATHCRY.add(deathCry3);
+			TowerDefense.SOUND_ENEMY_DEATHCRY.add(deathCry4);
 			
 			// set up music
 			MusicFactory.setAssetBasePath("bgm/");
@@ -237,7 +257,7 @@ public class TowerDefense extends SimpleBaseGameActivity {
 			TowerDefense.MUSIC_THEME_1.setLooping(true);
 			
 		    // set up bitmap textures
-		    ITexture backgroundTexture = new BitmapTexture(this.getTextureManager(), new IInputStreamOpener() {
+		    ITexture level1Background = new BitmapTexture(this.getTextureManager(), new IInputStreamOpener() {
 		        @Override
 		        public InputStream open() throws IOException {
 		            return getAssets().open("gfx/background.png");
@@ -357,9 +377,15 @@ public class TowerDefense extends SimpleBaseGameActivity {
 		            return getAssets().open("gfx/option_locked.png");
 		        }
 		    });
+		    ITexture sellOptionTexture = new BitmapTexture(this.getTextureManager(), new IInputStreamOpener() {
+		        @Override
+		        public InputStream open() throws IOException {
+		            return getAssets().open("gfx/option_sell.png");
+		        }
+		    });
 		    
 		    // load bitmap textures into VRAM
-		    backgroundTexture.load();
+		    level1Background.load();
 		    mainHudTexture.load();
 		    skillsHudTexture.load();
 		    victoryTexture.load();
@@ -379,9 +405,10 @@ public class TowerDefense extends SimpleBaseGameActivity {
 		    magicianOptionTexture.load();
 		    infantryOptionTexture.load();
 		    lockedOptionTexture.load();
+		    sellOptionTexture.load();
 		    
 		    // set up texture regions
-		    this.mBackgroundTextureRegion = TextureRegionFactory.extractFromTexture(backgroundTexture);
+		    TowerDefense.BACKGROUND_LEVEL_1 = TextureRegionFactory.extractFromTexture(level1Background);
 		    TowerDefense.TEXTURE_HUD_MAIN = TextureRegionFactory.extractFromTexture(mainHudTexture);
 		    TowerDefense.TEXTURE_HUD_SKILLS = TextureRegionFactory.extractFromTexture(skillsHudTexture);
 		    TowerDefense.TEXTURE_VICTORY = TextureRegionFactory.extractFromTexture(victoryTexture);
@@ -401,6 +428,7 @@ public class TowerDefense extends SimpleBaseGameActivity {
 		    TowerDefense.TEXTURE_OPTION_MAGICIAN = TextureRegionFactory.extractFromTexture(magicianOptionTexture);
 		    TowerDefense.TEXTURE_OPTION_INFANTRY = TextureRegionFactory.extractFromTexture(infantryOptionTexture);
 		    TowerDefense.TEXTURE_OPTION_LOCKED = TextureRegionFactory.extractFromTexture(lockedOptionTexture);
+		    TowerDefense.TEXTURE_OPTION_SELL = TextureRegionFactory.extractFromTexture(sellOptionTexture);
 		    
 		} catch (IOException e) {
 		    Debug.e(e);
@@ -413,8 +441,13 @@ public class TowerDefense extends SimpleBaseGameActivity {
 		
 		// create the scene
 		mLevel.mScene = new Scene();
-		Sprite backgroundSprite = new Sprite(0, 0, this.mBackgroundTextureRegion, getVertexBufferObjectManager());
-		mLevel.mScene.attachChild(backgroundSprite);
+		
+		// set touch area order
+		mLevel.mScene.setOnAreaTouchTraversalFrontToBack();
+		
+		// create background
+		mBackground = new Background(0, 0, TowerDefense.BACKGROUND_LEVEL_1, getVertexBufferObjectManager());
+		mLevel.mScene.attachChild(mBackground);
 		
 		// instantiate and place WayPoints
 		mLevel.mWayPoint1 = new WayPoint(375, 95, getVertexBufferObjectManager());
@@ -441,7 +474,7 @@ public class TowerDefense extends SimpleBaseGameActivity {
 		mLevel.mWayPoint22 = new WayPoint(636, 300, getVertexBufferObjectManager());
 		mLevel.mWayPoint23 = new WayPoint(662, 282, getVertexBufferObjectManager());
 		mLevel.mWayPoint24 = new WayPoint(687, 275, getVertexBufferObjectManager());
-		mLevel.mWayPoint25 = new WayPoint(815, 275, getVertexBufferObjectManager());
+		mLevel.mWayPoint25 = new WayPoint(830, 275, getVertexBufferObjectManager());
 		
 		// define paths
 		mLevel.mPath1 = new ArrayList<WayPoint>();
@@ -471,7 +504,7 @@ public class TowerDefense extends SimpleBaseGameActivity {
 		mLevel.mPath1.add(mLevel.mWayPoint24);
 		mLevel.mPath1.add(mLevel.mWayPoint25);
 		
-		// add paths to the scene
+		// add waypoints to the scene
 		for (int i = 0; i < mLevel.mPath1.size(); i++) {
 			mLevel.mScene.attachChild(mLevel.mPath1.get(i));
 		}
@@ -479,15 +512,15 @@ public class TowerDefense extends SimpleBaseGameActivity {
 		// define waves
 		mLevel.mWave1 = new ArrayList<Integer>();
 		for (int i = 0; i < 9; i++) {
-			mLevel.mWave1.add(TowerDefense.ENEMY_TEST);
+			mLevel.mWave1.add(Enemy.ENEMY_TEST);
 		}
 		mLevel.mWave2 = new ArrayList<Integer>();
 		for (int i = 0; i < 17; i++) {
-			mLevel.mWave2.add(TowerDefense.ENEMY_TEST);
+			mLevel.mWave2.add(Enemy.ENEMY_TEST);
 		}
 		mLevel.mWave3 = new ArrayList<Integer>();
 		for (int i = 0; i < 36; i++) {
-			mLevel.mWave3.add(TowerDefense.ENEMY_TEST);
+			mLevel.mWave3.add(Enemy.ENEMY_TEST);
 		}
 		
 		// define wave sets
@@ -497,7 +530,7 @@ public class TowerDefense extends SimpleBaseGameActivity {
 		mLevel.mWaveSet1.add(mLevel.mWave3);
 		
 		// instantiate and place SpawnPoints
-		mLevel.mSpawnPoint1 = new SpawnPoint(mLevel.mWaveSet1, TowerDefense.WAVE_DELAY_NORMAL, mLevel.mPath1, 375, -15, getVertexBufferObjectManager());
+		mLevel.mSpawnPoint1 = new SpawnPoint(mLevel.mWaveSet1, mLevel.mPath1, 375, -30, getVertexBufferObjectManager());
 		mLevel.mSpawnPoints.add(mLevel.mSpawnPoint1);
 		mLevel.mScene.attachChild(mLevel.mSpawnPoint1);
 		
@@ -567,14 +600,43 @@ public class TowerDefense extends SimpleBaseGameActivity {
 		};
 		mLevel.mScene.registerUpdateHandler(mUpdateHandler);
 		
-		// start music
-		TowerDefense.MUSIC_THEME_1.play();
+		// start level
+		start();
 		
 		// return the scene
 		return mLevel.mScene;
 	}
 	
-	public void detachGarbage() {
+	public void start() {
+		
+		// start music
+		TowerDefense.MUSIC_THEME_1.play();
+		
+		// start wave timer
+        mLevel.mWaveTimer = new Timer();
+        mLevel.mWaveTimer.schedule(new WaveTask(), START_DELAY, WAVE_DELAY);
+		
+	}
+	
+	class WaveTask extends TimerTask {
+
+		@Override
+		public void run() {
+			
+			if (mLevel.mWaveCurrent < mLevel.mWavesTotal) {
+				mLevel.mWaveCurrent++;
+				for (int i = 0; i < mLevel.mSpawnPoints.size(); i++) {
+					mLevel.mSpawnPoints.get(i).launchWave(mLevel.mWaveCurrent - 1);
+				}
+			} else {
+				mLevel.mWaveTimer.cancel();
+			}
+			
+		}
+		
+	}
+	
+	public synchronized void detachGarbage() {
 		
 		// loop through children
 		for (int i = 0; i < mLevel.mScene.getChildCount(); i++) {
@@ -585,12 +647,8 @@ public class TowerDefense extends SimpleBaseGameActivity {
 			// detach child
 			if (child.getTag() == TAG_DETACHABLE) {
 				mLevel.mScene.detachChild(child);
-				
-				// unregister touch area
-				if (child instanceof Option) {
-					mLevel.mScene.unregisterTouchArea((ITouchArea) child);
-				}
 			}
+			
 		}
 		
 	}
@@ -619,13 +677,13 @@ public class TowerDefense extends SimpleBaseGameActivity {
 	}
 	
 	public void clearScene(Scene scene) {
+		mLevel.mWaveTimer.cancel();
 		for (int i = 0; i < scene.getChildCount(); i++) {
 			IEntity child = scene.getChildByIndex(i);
 			if (child instanceof Enemy) {
 				((Enemy) child).mState = Enemy.STATE_DEAD;
 				child.setTag(TAG_DETACHABLE);
 			} else if (child instanceof SpawnPoint) {
-				((SpawnPoint) child).mWaveTimer.cancel();
 				((SpawnPoint) child).mActive = false;
 			} else if (child instanceof Round || child instanceof SelectionWheel || child instanceof Option) {
 				child.setTag(TAG_DETACHABLE);
@@ -655,6 +713,15 @@ public class TowerDefense extends SimpleBaseGameActivity {
 		mLevel.mHealthText.setText("" + mLevel.mHealth);
 		mLevel.mCoinsText.setText("" + mLevel.mCoins);
 		mLevel.mWavesText.setText("WAVE " + mLevel.mWaveCurrent + "/" + mLevel.mWavesTotal);
+		
+	}
+	
+	public void hideSelectionWheel() {
+		
+		if (mSelectionWheel != null) {
+			mSelectionWheel.hide();
+			mSelectionWheel = null;
+		}
 		
 	}
 	

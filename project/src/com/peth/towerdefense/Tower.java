@@ -1,15 +1,19 @@
 package com.peth.towerdefense;
 
+import java.util.ArrayList;
+
 import org.andengine.entity.sprite.Sprite;
+import org.andengine.input.touch.TouchEvent;
 import org.andengine.opengl.texture.region.ITextureRegion;
 import org.andengine.opengl.vbo.VertexBufferObjectManager;
 
 public abstract class Tower extends Sprite {
 	
-	// round constants
-	public static final int ROUND_TEST = 0;
-	public static final int ROUND_SLOW = 1;
-	public static final int ROUND_FIRE = 2;
+	// tower constants
+	public static final int TOWER_TEST = 0;
+	public static final int TOWER_SLOW = 1;
+	public static final int TOWER_FIRE = 2;
+	public static final int TOWER_BOMB = 3;
 	
 	// scan method constants
 	public static final int SCAN_FIRST = 0;
@@ -25,22 +29,34 @@ public abstract class Tower extends Sprite {
 	public int mDelay;
 	public int mScanMethod;
 	public Enemy mTarget;
+	public float mPrice;
+	public ArrayList<Integer> mOptions;
+	public BasePoint mBasePoint;
+	public Thread mScanThread;
+	public boolean mActive = true;
 	
 	// constructor
-	public Tower(float x, float y, float offsetX, float offsetY, ITextureRegion texture, VertexBufferObjectManager pVertexBufferObjectManager) {
+	public Tower(BasePoint parent, float offsetX, float offsetY, ITextureRegion texture, VertexBufferObjectManager pVertexBufferObjectManager) {
 		
 		// superconstructor
-		super(x - (texture.getWidth() / 2), y - (texture.getHeight() / 2), texture, pVertexBufferObjectManager);
+		super(parent.mCenterX - (texture.getWidth() / 2), parent.mCenterY - (texture.getHeight() / 2), texture, pVertexBufferObjectManager);
 		
 		// set variables
+		setZIndex(TowerDefense.ZINDEX_TOWERS);
+		mBasePoint = parent;
 		mCenterX = getX() + (texture.getWidth() / 2);
 		mCenterY = getY() + (texture.getHeight() / 2);
 		mOffsetX = offsetX;
 		mOffsetY = offsetY;
+		mOptions = new ArrayList<Integer>();
+		mOptions.add(Option.SELL_TOWER);
+		
+		// register touch handler
+		TowerDefense.mLevel.mScene.registerTouchArea(this);
 		
 		// start scanning for enemies
-		Thread scanThread = new Thread(new ScanTask());
-		scanThread.start();
+		mScanThread = new Thread(new ScanTask());
+		mScanThread.start();
 		
 	}
 	
@@ -50,7 +66,7 @@ public abstract class Tower extends Sprite {
 		@Override
 		public void run() {
 			
-			while (true) {
+			while (mActive) {
 				
 				scan(mScanMethod);
 				
@@ -94,7 +110,7 @@ public abstract class Tower extends Sprite {
 	
 	// checks all enemies to see if one is in range
 	public void scan(int scanMethod) {
-		
+
 		switch(scanMethod) {
 		
 		case SCAN_FIRST:
@@ -159,20 +175,44 @@ public abstract class Tower extends Sprite {
 	public void fireRound(int roundCode) {
 		
 		switch (roundCode) {
-		case ROUND_TEST:
+		case Round.ROUND_TEST:
 			Round testRound = new TestRound(mTarget, mCenterX + mOffsetX, mCenterY + mOffsetY, getVertexBufferObjectManager());
 			TowerDefense.mLevel.mScene.attachChild(testRound);
 			break;
-		case ROUND_SLOW:
+		case Round.ROUND_SLOW:
 			Round slowRound = new SlowRound(mTarget, mCenterX + mOffsetX, mCenterY + mOffsetY, getVertexBufferObjectManager());
 			TowerDefense.mLevel.mScene.attachChild(slowRound);
 			break;
-		case ROUND_FIRE:
+		case Round.ROUND_FIRE:
 			Round fireRound = new FireRound(mTarget, mCenterX + mOffsetX, mCenterY + mOffsetY, getVertexBufferObjectManager());
 			TowerDefense.mLevel.mScene.attachChild(fireRound);
 			break;
 		}
 		
+	}
+	
+	@Override
+	public void onDetached() {
+		mActive = false;
+		TowerDefense.mLevel.mScene.unregisterTouchArea(this);
+	}
+	
+	@Override
+    public boolean onAreaTouched(TouchEvent pSceneTouchEvent, float pTouchAreaLocalX, float pTouchAreaLocalY) {
+        
+		if (pSceneTouchEvent.getAction() == TouchEvent.ACTION_DOWN) {
+			if (TowerDefense.mLevel.mSelectionWheel != null && TowerDefense.mLevel.mSelectionWheel.mParent == this) {
+				TowerDefense.mLevel.mSelectionWheel.hide();
+			} else {
+				showSelectionWheel();
+			}
+		}
+        return true;
+    }
+	
+	public void showSelectionWheel() {
+		if (TowerDefense.mLevel.mSelectionWheel != null) TowerDefense.mLevel.mSelectionWheel.hide();
+		TowerDefense.mLevel.mSelectionWheel = new SelectionWheel(mCenterX, mCenterY + mOffsetY / 2, this, SelectionWheel.TYPE_TOWER, mOptions, getVertexBufferObjectManager());
 	}
 	
 }
@@ -185,20 +225,21 @@ class TestTower extends Tower {
 	public static final int PRICE = 70;
 	public static final int RANGE = 120;
 	public static final int DELAY = 800;
-	public static final int ROUND = ROUND_TEST;
+	public static final int ROUND = Round.ROUND_TEST;
 	public static final int SCAN_METHOD = SCAN_FIRST;
 	public static final ITextureRegion TEXTURE = TowerDefense.TEXTURE_TOWER_TEST;
 	
-	public TestTower(float x, float y, VertexBufferObjectManager pVertexBufferObjectManager) {
+	public TestTower(BasePoint parent, VertexBufferObjectManager pVertexBufferObjectManager) {
 		
 		// superconstructor
-		super(x, y, OFFSET_X, OFFSET_Y, TEXTURE, pVertexBufferObjectManager);
+		super(parent, OFFSET_X, OFFSET_Y, TEXTURE, pVertexBufferObjectManager);
 		
 		// set variables
 		mRange = RANGE;
 		mDelay = DELAY;
 		mRound = ROUND;
 		mScanMethod = SCAN_METHOD;
+		mPrice = PRICE;
 		
 	}
 	
@@ -212,20 +253,21 @@ class SlowTower extends Tower {
 	public static final int PRICE = 70;
 	public static final int RANGE = 100;
 	public static final int DELAY = 2000;
-	public static final int ROUND = ROUND_SLOW;
+	public static final int ROUND = Round.ROUND_SLOW;
 	public static final int SCAN_METHOD = SCAN_FIRST_NOT_SLOW;
 	public static final ITextureRegion TEXTURE = TowerDefense.TEXTURE_TOWER_SLOW;
 	
-	public SlowTower(float x, float y, VertexBufferObjectManager pVertexBufferObjectManager) {
+	public SlowTower(BasePoint parent, VertexBufferObjectManager pVertexBufferObjectManager) {
 		
 		// superconstructor
-		super(x, y, OFFSET_X, OFFSET_Y, TEXTURE, pVertexBufferObjectManager);
+		super(parent, OFFSET_X, OFFSET_Y, TEXTURE, pVertexBufferObjectManager);
 		
 		// set variables
 		mRange = RANGE;
 		mDelay = DELAY;
 		mRound = ROUND;
 		mScanMethod = SCAN_METHOD;
+		mPrice = PRICE;
 		
 	}
 	
@@ -239,20 +281,21 @@ class FireTower extends Tower {
 	public static final int PRICE = 120;
 	public static final int RANGE = 100;
 	public static final int DELAY = 5;
-	public static final int ROUND = ROUND_FIRE;
+	public static final int ROUND = Round.ROUND_FIRE;
 	public static final int SCAN_METHOD = SCAN_FIRST;
 	public static final ITextureRegion TEXTURE = TowerDefense.TEXTURE_TOWER_FIRE;
 	
-	public FireTower(float x, float y, VertexBufferObjectManager pVertexBufferObjectManager) {
+	public FireTower(BasePoint parent, VertexBufferObjectManager pVertexBufferObjectManager) {
 		
 		// superconstructor
-		super(x, y, OFFSET_X, OFFSET_Y, TEXTURE, pVertexBufferObjectManager);
+		super(parent, OFFSET_X, OFFSET_Y, TEXTURE, pVertexBufferObjectManager);
 		
 		// set variables
 		mRange = RANGE;
 		mDelay = DELAY;
 		mRound = ROUND;
 		mScanMethod = SCAN_METHOD;
+		mPrice = PRICE;
 		
 	}
 	

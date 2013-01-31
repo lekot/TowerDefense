@@ -31,44 +31,51 @@ public class SelectionWheel extends Sprite {
 		super(x - (TEXTURE.getWidth() / 2), y - (TEXTURE.getHeight() / 2), TEXTURE, pVertexBufferObjectManager);
 		
 		// initialize variables
-		this.setZIndex(1000);
+		setZIndex(TowerDefense.ZINDEX_GUI);
 		mCenterX = getX() + (TEXTURE.getWidth() / 2);
 		mCenterY = getY() + (TEXTURE.getHeight() / 2);
 		mParent = parent;
 		mOptions = new ArrayList<Option>();
 		
-		// create select options
-		if (type == TYPE_BASE) {
+		// attach
+		TowerDefense.mLevel.mScene.attachChild(this);
 			
-			// loop through all options
-			for (int i = 0; i < optionCodes.size(); i++) {
+		// loop through all options
+		for (int i = 0; i < optionCodes.size(); i++) {
+			
+			// determine position
+			double angle = Math.toRadians(((double) 360 / optionCodes.size()) * i - 45);
+			float xPos = (float) (mCenterX + (Math.sin(angle) * mRadius));
+			float yPos = (float) (mCenterY - (Math.cos(angle) * mRadius));
+			
+			// create select options
+			if (type == TYPE_BASE) {
 				
-				// determine position
-				double angle = Math.toRadians(((double) 360 / optionCodes.size()) * i - 45);
-				float xPos = (float) (mCenterX + (Math.sin(angle) * mRadius));
-				float yPos = (float) (mCenterY - (Math.cos(angle) * mRadius));
-				
-				// create and attach option
+				// create options
 				switch (optionCodes.get(i)) {
-				case BasePoint.TOWER_TEST:
-					Option testTowerOption = new TestTowerOption(xPos, yPos, mParent, getVertexBufferObjectManager());
-					mOptions.add(testTowerOption);
-					TowerDefense.mLevel.mScene.attachChild(testTowerOption);
+				case Tower.TOWER_TEST:
+					mOptions.add(new TestTowerOption(xPos, yPos, mParent, this, getVertexBufferObjectManager()));
 					break;
-				case BasePoint.TOWER_SLOW:
-					Option slowTowerOption = new SlowTowerOption(xPos, yPos, mParent, getVertexBufferObjectManager());
-					mOptions.add(slowTowerOption);
-					TowerDefense.mLevel.mScene.attachChild(slowTowerOption);
+				case Tower.TOWER_SLOW:
+					mOptions.add(new SlowTowerOption(xPos, yPos, mParent, this, getVertexBufferObjectManager()));
 					break;
-				case BasePoint.TOWER_FIRE:
-					Option fireTowerOption = new FireTowerOption(xPos, yPos, mParent, getVertexBufferObjectManager());
-					mOptions.add(fireTowerOption);
-					TowerDefense.mLevel.mScene.attachChild(fireTowerOption);
+				case Tower.TOWER_FIRE:
+					mOptions.add(new FireTowerOption(xPos, yPos, mParent, this, getVertexBufferObjectManager()));
 					break;
-				case BasePoint.TOWER_BOMB:
-					Option bombTowerOption = new LockedOption(xPos, yPos, mParent, getVertexBufferObjectManager());
-					mOptions.add(bombTowerOption);
-					TowerDefense.mLevel.mScene.attachChild(bombTowerOption);
+				case Tower.TOWER_BOMB:
+					mOptions.add(new LockedOption(xPos, yPos, mParent, this, getVertexBufferObjectManager()));
+					break;
+				}
+				
+			} else if (type == TYPE_TOWER) {
+				
+				// create options
+				switch (optionCodes.get(i)) {
+				case Option.UPGRADE_TOWER:
+					//mOptions.add(new UpgradeOption(xPos, yPos, mParent, this, getVertexBufferObjectManager()));
+					break;
+				case Option.SELL_TOWER:
+					mOptions.add(new SellOption(xPos, yPos, mParent, this, getVertexBufferObjectManager()));
 					break;
 				}
 				
@@ -87,6 +94,8 @@ public class SelectionWheel extends Sprite {
 		
 		setVisible(false);
 		setTag(TowerDefense.TAG_DETACHABLE);
+		
+		TowerDefense.mLevel.mSelectionWheel = null;
 		
 	}
 	
