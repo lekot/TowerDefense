@@ -12,6 +12,7 @@ public class SpawnPoint extends Sprite {
 	
 	// misc constants
 	public static final int SPAWN_DELAY = 500;
+	public static final int WAVEBUTTON_DELAY = 3000;
 	
 	// globals
 	public float mCenterX;
@@ -19,6 +20,7 @@ public class SpawnPoint extends Sprite {
 	public ArrayList<ArrayList<Integer>> mWaveSet;
 	public ArrayList<WayPoint> mPath;
 	public boolean mActive = true;
+	public WaveButton mWaveButton;
 	
 	public SpawnPoint(ArrayList<ArrayList<Integer>> waveSet, ArrayList<WayPoint> path, float x, float y, VertexBufferObjectManager pVertexBufferObjectManager) {
         
@@ -30,6 +32,7 @@ public class SpawnPoint extends Sprite {
 		mCenterY = getY() + (TEXTURE.getHeight() / 2);
 		mWaveSet = waveSet;
         mPath = path;
+        mWaveButton = new WaveButton(this, getVertexBufferObjectManager());
         
         // set visibility
      	setVisible(false);
@@ -43,12 +46,16 @@ public class SpawnPoint extends Sprite {
 			@Override
 			public void run() {
 				
+				// hide wave button
+				mWaveButton.hide();
+				
 				// get current wave
 				ArrayList<Integer> currentWave = mWaveSet.get(wave);
 				
 				// spawn the enemies
 				for (int i = 0; i < currentWave.size(); i++) {
 					
+					// check if the spawnpoint was deactivated
 					if (!mActive) break;
 					
 					// spawn an enemy
@@ -61,6 +68,16 @@ public class SpawnPoint extends Sprite {
 						e.printStackTrace();
 					}
 					
+				}
+				
+				// after all enemies have spawned, if this wasn't the last wave, show the wave timer again
+				if (TowerDefense.mLevel.mWaveCurrent < mWaveSet.size()) {
+					try {
+						Thread.sleep(WAVEBUTTON_DELAY);
+					} catch (InterruptedException e) {
+						e.printStackTrace();
+					}
+					mWaveButton.show();
 				}
 				
 			}
@@ -82,7 +99,7 @@ public class SpawnPoint extends Sprite {
 			TowerDefense.mLevel.mScene.attachChild(enemy);
 			break;
 		}
-		 
+		
 	}
 	
 }

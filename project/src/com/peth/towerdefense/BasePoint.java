@@ -1,5 +1,7 @@
 package com.peth.towerdefense;
 
+import java.util.ArrayList;
+
 import org.andengine.entity.sprite.Sprite;
 import org.andengine.input.touch.TouchEvent;
 import org.andengine.opengl.texture.region.ITextureRegion;
@@ -33,7 +35,7 @@ public class BasePoint extends Sprite {
 	@Override
     public boolean onAreaTouched(TouchEvent pSceneTouchEvent, float pTouchAreaLocalX, float pTouchAreaLocalY) {
         
-		if (pSceneTouchEvent.getAction() == TouchEvent.ACTION_DOWN) {
+		if (pSceneTouchEvent.getAction() == TouchEvent.ACTION_UP) {
 			if (mCurrentTower == null) { //TODO instead of using this check, unregister the basepoint's touch area when a tower is built on it, and re-register it when its tower is sold
 				if (TowerDefense.mLevel.mSelectionWheel != null && TowerDefense.mLevel.mSelectionWheel.mParent == this) {
 					TowerDefense.mLevel.mSelectionWheel.hide();
@@ -49,28 +51,21 @@ public class BasePoint extends Sprite {
 		
 		TowerDefense.SOUND_TOWER_BUILD.play();
 		
-		//TODO take money-check out of here and put it in the options check
 		switch (towerCode) {
 		case Tower.TOWER_TEST:
-			if (TowerDefense.mLevel.mCoins >= TestTower.PRICE) {
-				mCurrentTower = new TestTower(this, getVertexBufferObjectManager());
-				TowerDefense.mLevel.mScene.attachChild(mCurrentTower);
-				TowerDefense.mLevel.mCoins -= TestTower.PRICE;
-			}
+			mCurrentTower = new TestTower(this, getVertexBufferObjectManager());
+			TowerDefense.mLevel.mScene.attachChild(mCurrentTower);
+			TowerDefense.mLevel.mCoins -= TestTower.PRICE;
 			break;
 		case Tower.TOWER_SLOW:
-			if (TowerDefense.mLevel.mCoins >= SlowTower.PRICE) {
-				mCurrentTower = new SlowTower(this, getVertexBufferObjectManager());
-				TowerDefense.mLevel.mScene.attachChild(mCurrentTower);
-				TowerDefense.mLevel.mCoins -= SlowTower.PRICE;
-			}
+			mCurrentTower = new SlowTower(this, getVertexBufferObjectManager());
+			TowerDefense.mLevel.mScene.attachChild(mCurrentTower);
+			TowerDefense.mLevel.mCoins -= SlowTower.PRICE;
 			break;
 		case Tower.TOWER_FIRE:
-			if (TowerDefense.mLevel.mCoins >= FireTower.PRICE) {
-				mCurrentTower = new FireTower(this, getVertexBufferObjectManager());
-				TowerDefense.mLevel.mScene.attachChild(mCurrentTower);
-				TowerDefense.mLevel.mCoins -= FireTower.PRICE;
-			}
+			mCurrentTower = new FireTower(this, getVertexBufferObjectManager());
+			TowerDefense.mLevel.mScene.attachChild(mCurrentTower);
+			TowerDefense.mLevel.mCoins -= FireTower.PRICE;
 			break;
 		}
 		
@@ -79,7 +74,12 @@ public class BasePoint extends Sprite {
 	public void showSelectionWheel() {
 		
 		if (TowerDefense.mLevel.mSelectionWheel != null) TowerDefense.mLevel.mSelectionWheel.hide();
-		TowerDefense.mLevel.mSelectionWheel = new SelectionWheel(mCenterX, mCenterY, this, SelectionWheel.TYPE_BASE, TowerDefense.mLevel.mAvailableTowers, getVertexBufferObjectManager());
+		ArrayList<Integer> baseTowerOptions = new ArrayList<Integer>();
+		baseTowerOptions.add(Option.BUILD_TOWER_TEST);
+		baseTowerOptions.add(Option.BUILD_TOWER_SLOW);
+		baseTowerOptions.add(Option.BUILD_TOWER_FIRE);
+		baseTowerOptions.add(Option.LOCKED);
+		TowerDefense.mLevel.mSelectionWheel = new SelectionWheel(mCenterX, mCenterY, this, SelectionWheel.TYPE_BASE, baseTowerOptions, getVertexBufferObjectManager());
 		
 	}
 	

@@ -8,27 +8,32 @@ import org.andengine.opengl.vbo.VertexBufferObjectManager;
 
 public class Option extends Sprite {
 	
-	// option code constants
+	// constants
+	public static final int LOCKED = -1;
 	public static final int BUILD_TOWER_TEST = 0;
 	public static final int BUILD_TOWER_SLOW = 1;
 	public static final int BUILD_TOWER_FIRE = 2;
-	public static final int SELL_TOWER = 3;
-	public static final int UPGRADE_TOWER = 4;
+	public static final int SELL_TOWER = 4;
+	public static final int UPGRADE_TOWER = 5;
 	
 	// globals
 	public Entity mParent;
-	public int mOptionCode;
+	public float mCenterX;
+	public float mCenterY;
+	public boolean mAvailable = true;
+	public Sprite mPriceSign;
 	
 	// constructor
-	public Option(float x, float y, Entity parent, SelectionWheel wheel, ITextureRegion texture, int optionCode, VertexBufferObjectManager pVertexBufferObjectManager) {
+	public Option(float x, float y, Entity parent, SelectionWheel wheel, ITextureRegion texture, VertexBufferObjectManager pVertexBufferObjectManager) {
 		
 		// superconstructor
 		super(x - (texture.getWidth() / 2), y - (texture.getHeight() / 2), texture, pVertexBufferObjectManager);
 		
 		// set variables
-		setZIndex(TowerDefense.ZINDEX_GUI);
+		setZIndex(TowerDefense.ZINDEX_HUD);
 		mParent = parent;
-		mOptionCode = optionCode;
+		mCenterX = x;
+		mCenterY = y;
 		
 		// attach and register touch handler
 		TowerDefense.mLevel.mScene.attachChild(this);
@@ -38,23 +43,27 @@ public class Option extends Sprite {
 	@Override
 	public void onDetached() {
 		TowerDefense.mLevel.mScene.unregisterTouchArea(this);
+		if (mPriceSign != null) {
+			mPriceSign.setVisible(false);
+			mPriceSign.setTag(TowerDefense.TAG_DETACHABLE);
+		}
 	}
 	
 }
 
 class TestTowerOption extends Option {
 	
-	// texture constants
+	// constants
 	public static final ITextureRegion TEXTURE = TowerDefense.TEXTURE_OPTION_ARCHER;
-	
-	// option code constants
-	public static final int OPTION_CODE = BUILD_TOWER_TEST;
 	
 	// constructor
 	public TestTowerOption(float x, float y, Entity parent, SelectionWheel wheel, VertexBufferObjectManager pVertexBufferObjectManager) {
+		super(x, y, parent, wheel, TEXTURE, pVertexBufferObjectManager);
 		
-		// superconstructor
-		super(x, y, parent, wheel, TEXTURE, OPTION_CODE, pVertexBufferObjectManager);
+		// set variables
+		mPriceSign = new PriceSign(mCenterX, mCenterY + PriceSign.YOFFSET, TestTower.PRICE, getVertexBufferObjectManager());
+		TowerDefense.mLevel.mScene.attachChild(mPriceSign);
+		mAvailable = (TowerDefense.mLevel.mCoins < TestTower.PRICE) ? false : true;
 		
 	}
 	
@@ -62,8 +71,10 @@ class TestTowerOption extends Option {
     public boolean onAreaTouched(TouchEvent pSceneTouchEvent, float pTouchAreaLocalX, float pTouchAreaLocalY) {
         
 		if (pSceneTouchEvent.getAction() == TouchEvent.ACTION_UP) {
-			((BasePoint) mParent).buildTower(mOptionCode);
-			TowerDefense.mLevel.hideSelectionWheel();
+			if (mAvailable) {
+				((BasePoint) mParent).buildTower(Tower.TOWER_TEST);
+				TowerDefense.mLevel.hideSelectionWheel();
+			}
 		}
         return true;
     }
@@ -72,17 +83,17 @@ class TestTowerOption extends Option {
 
 class SlowTowerOption extends Option {
 	
-	// texture constants
+	// constants
 	public static final ITextureRegion TEXTURE = TowerDefense.TEXTURE_OPTION_INFANTRY;
-
-	// option code constants
-	public static final int OPTION_CODE = BUILD_TOWER_SLOW;
 	
 	// constructor
 	public SlowTowerOption(float x, float y, Entity parent, SelectionWheel wheel, VertexBufferObjectManager pVertexBufferObjectManager) {
+		super(x, y, parent, wheel, TEXTURE, pVertexBufferObjectManager);
 		
-		// superconstructor
-		super(x, y, parent, wheel, TEXTURE, OPTION_CODE, pVertexBufferObjectManager);
+		// set variables
+		mPriceSign = new PriceSign(mCenterX, mCenterY + PriceSign.YOFFSET, SlowTower.PRICE, getVertexBufferObjectManager());
+		TowerDefense.mLevel.mScene.attachChild(mPriceSign);
+		mAvailable = (TowerDefense.mLevel.mCoins < SlowTower.PRICE) ? false : true;
 		
 	}
 	
@@ -90,8 +101,10 @@ class SlowTowerOption extends Option {
     public boolean onAreaTouched(TouchEvent pSceneTouchEvent, float pTouchAreaLocalX, float pTouchAreaLocalY) {
         
 		if (pSceneTouchEvent.getAction() == TouchEvent.ACTION_UP) {
-			((BasePoint) mParent).buildTower(mOptionCode);
-			TowerDefense.mLevel.hideSelectionWheel();
+			if (mAvailable) {
+				((BasePoint) mParent).buildTower(Tower.TOWER_SLOW);
+				TowerDefense.mLevel.hideSelectionWheel();
+			}
 		}
         return true;
     }
@@ -100,17 +113,18 @@ class SlowTowerOption extends Option {
 
 class FireTowerOption extends Option {
 	
-	// texture constants
+	// constants
 	public static final ITextureRegion TEXTURE = TowerDefense.TEXTURE_OPTION_MAGICIAN;
-
-	// option code constants
-	public static final int OPTION_CODE = BUILD_TOWER_FIRE;
+	public static final ITextureRegion TEXTURE_UNAVAILABLE = TowerDefense.TEXTURE_OPTION_MAGICIAN_UNAVAILABLE; //TODO use this
 	
 	// constructor
 	public FireTowerOption(float x, float y, Entity parent, SelectionWheel wheel, VertexBufferObjectManager pVertexBufferObjectManager) {
+		super(x, y, parent, wheel, TEXTURE, pVertexBufferObjectManager);
 		
-		// superconstructor
-		super(x, y, parent, wheel, TEXTURE, OPTION_CODE, pVertexBufferObjectManager);
+		// set variables
+		mPriceSign = new PriceSign(mCenterX, mCenterY + PriceSign.YOFFSET, FireTower.PRICE, getVertexBufferObjectManager());
+		TowerDefense.mLevel.mScene.attachChild(mPriceSign);
+		mAvailable = (TowerDefense.mLevel.mCoins < FireTower.PRICE) ? false : true;
 		
 	}
 	
@@ -118,8 +132,44 @@ class FireTowerOption extends Option {
     public boolean onAreaTouched(TouchEvent pSceneTouchEvent, float pTouchAreaLocalX, float pTouchAreaLocalY) {
         
 		if (pSceneTouchEvent.getAction() == TouchEvent.ACTION_UP) {
-			((BasePoint) mParent).buildTower(mOptionCode);
-			TowerDefense.mLevel.hideSelectionWheel();
+			if (mAvailable) {
+				((BasePoint) mParent).buildTower(Tower.TOWER_FIRE);
+				TowerDefense.mLevel.hideSelectionWheel();
+			}
+		}
+        return true;
+    }
+	
+}
+
+class UpgradeOption extends Option {
+	
+	// constants
+	public static final ITextureRegion TEXTURE = TowerDefense.TEXTURE_OPTION_UPGRADE;
+	
+	// globals
+	public int mTowerCode;
+	
+	// constructor
+	public UpgradeOption(float x, float y, Entity parent, SelectionWheel wheel, int towerCode, float price, VertexBufferObjectManager pVertexBufferObjectManager) {
+		super(x, y, parent, wheel, TEXTURE, pVertexBufferObjectManager);
+		
+		// set variables
+		mTowerCode = towerCode;
+		mPriceSign = new PriceSign(mCenterX, mCenterY + PriceSign.YOFFSET, price, getVertexBufferObjectManager());
+		TowerDefense.mLevel.mScene.attachChild(mPriceSign);
+		mAvailable = (TowerDefense.mLevel.mCoins < price) ? false : true;
+		
+	}
+	
+	@Override
+    public boolean onAreaTouched(TouchEvent pSceneTouchEvent, float pTouchAreaLocalX, float pTouchAreaLocalY) {
+        
+		if (pSceneTouchEvent.getAction() == TouchEvent.ACTION_UP) {
+			if (mAvailable) {
+				((Tower) mParent).upgradeTower(mTowerCode);
+				TowerDefense.mLevel.hideSelectionWheel();
+			}
 		}
         return true;
     }
@@ -128,31 +178,18 @@ class FireTowerOption extends Option {
 
 class SellOption extends Option {
 	
-	// texture constants
+	// constants
 	public static final ITextureRegion TEXTURE = TowerDefense.TEXTURE_OPTION_SELL;
-
-	// option code constants
-	public static final int OPTION_CODE = BUILD_TOWER_FIRE;
 	
 	// constructor
 	public SellOption(float x, float y, Entity parent, SelectionWheel wheel, VertexBufferObjectManager pVertexBufferObjectManager) {
-		
-		// superconstructor
-		super(x, y, parent, wheel, TEXTURE, OPTION_CODE, pVertexBufferObjectManager);
-		
+		super(x, y, parent, wheel, TEXTURE, pVertexBufferObjectManager);
 	}
 	
 	@Override
     public boolean onAreaTouched(TouchEvent pSceneTouchEvent, float pTouchAreaLocalX, float pTouchAreaLocalY) {
-        
-		TowerDefense.SOUND_TOWER_SELL.play();
-		TowerDefense.mLevel.mCoins += Math.ceil(((Tower) mParent).mPrice * TowerDefense.SALE_RATIO);
-		((Tower) mParent).mBasePoint.mCurrentTower = null;
-		mParent.setVisible(false);
-		mParent.setTag(TowerDefense.TAG_DETACHABLE);
-		
+		((Tower) mParent).sellTower();
 		TowerDefense.mLevel.hideSelectionWheel();
-		
         return true;
     }
 	
@@ -160,18 +197,17 @@ class SellOption extends Option {
 
 class LockedOption extends Option {
 	
-	// texture constants
+	// constants
 	public static final ITextureRegion TEXTURE = TowerDefense.TEXTURE_OPTION_LOCKED;
-
-	// option code constants
-	public static final int OPTION_CODE = -1;
 	
 	// constructor
 	public LockedOption(float x, float y, Entity parent, SelectionWheel wheel, VertexBufferObjectManager pVertexBufferObjectManager) {
-		
-		// superconstructor
-		super(x, y, parent, wheel, TEXTURE, OPTION_CODE, pVertexBufferObjectManager);
-		
+		super(x, y, parent, wheel, TEXTURE, pVertexBufferObjectManager);
 	}
+	
+	@Override
+    public boolean onAreaTouched(TouchEvent pSceneTouchEvent, float pTouchAreaLocalX, float pTouchAreaLocalY) {
+        return true;
+    }
 	
 }

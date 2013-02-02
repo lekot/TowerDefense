@@ -70,7 +70,7 @@ public abstract class Round extends Sprite {
 				
 				// increase size of the sprite if it is a fire bullet
 				if (mType == ROUND_FIRE) {
-					setScale(Math.min(5, (float) (getScaleX() + 0.2)));
+					setScale(Math.min(1, getScaleX() + 0.025f));
 				}
 				
 				// sleep for animation's sake
@@ -153,7 +153,7 @@ class FireRound extends Round {
 	
 	// constants
 	public static final int TYPE = ROUND_FIRE;
-	public static final int SPEED = 5;
+	public static final int SPEED = 4;
 	public static final double DAMAGE = 0.2;
 	public static final ITextureRegion TEXTURE = TowerDefense.TEXTURE_ROUND_FIRE;
 	
@@ -168,9 +168,8 @@ class FireRound extends Round {
 		mTarget = target;
 		mSpeed = SPEED;
 		mDamage = DAMAGE;
-		
-		// set opacity
-		setAlpha((float) 0.33);
+		setScale(0.2f);
+		setAlpha(0.25f);
 		
 	}
 	

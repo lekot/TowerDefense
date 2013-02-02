@@ -44,8 +44,8 @@ public abstract class Tower extends Sprite {
 		// set variables
 		setZIndex(TowerDefense.ZINDEX_TOWERS);
 		mBasePoint = parent;
-		mCenterX = getX() + (texture.getWidth() / 2);
-		mCenterY = getY() + (texture.getHeight() / 2);
+		mCenterX = parent.mCenterX;
+		mCenterY = parent.mCenterY;
 		mOffsetX = offsetX;
 		mOffsetY = offsetY;
 		mOptions = new ArrayList<Integer>();
@@ -67,41 +67,20 @@ public abstract class Tower extends Sprite {
 		public void run() {
 			
 			while (mActive) {
-				
-				scan(mScanMethod);
-				
-				if (mTarget != null) {
-					
+				if (mTarget == null) {
+					mTarget = scan(mScanMethod);
+				} else {
 					if (mTarget.mState == Enemy.STATE_DEAD) {
-						
 						mTarget = null;
-						
 					} else {
-						
 						if (inRange(mTarget)) {
-							
-							// rotate sprite towards enemy
-							//setRotation(getDirection(mTarget));
-							
-							// fire!
 							fireRound(mRound);
-							
-							try {
-								Thread.sleep(mDelay);
-							} catch (InterruptedException e) {
-								e.printStackTrace();
-							}
-							
+							try {Thread.sleep(mDelay);} catch (InterruptedException e) {e.printStackTrace();}
 						} else {
-							
 							mTarget = null;
-							
 						}
-						
 					}
-					
 				}
-			
 			}
 			
 		}
@@ -109,67 +88,52 @@ public abstract class Tower extends Sprite {
 	}
 	
 	// checks all enemies to see if one is in range
-	public void scan(int scanMethod) {
-
-		switch(scanMethod) {
+	public Enemy scan(int scanMethod) {
 		
-		case SCAN_FIRST:
+		synchronized (TowerDefense.mLevel.mCurrentEnemies) {
 			
-			// loop through all enemies
-			for (int i = 0; i < TowerDefense.mLevel.mCurrentEnemies.size(); i++) {
-				
-				Enemy potentialTarget = TowerDefense.mLevel.mCurrentEnemies.get(i);
-				
-				// check if enemy is targetable
-				if (!potentialTarget.isDead() && inRange(potentialTarget)) {
-					
-					// set the enemy as the target and stop scanning
-					mTarget = TowerDefense.mLevel.mCurrentEnemies.get(i);
-					break;
-					
+			switch (scanMethod) {
+			case SCAN_FIRST:
+				for (int i = 0; i < TowerDefense.mLevel.mCurrentEnemies.size(); i++) {
+					Enemy potentialTarget = TowerDefense.mLevel.mCurrentEnemies.get(i);
+					if (!potentialTarget.isDead() && inRange(potentialTarget)) {
+						return TowerDefense.mLevel.mCurrentEnemies.get(i);
+					}
 				}
-				
+				break;
+			case SCAN_FIRST_NOT_SLOW:
+				for (int i = 0; i < TowerDefense.mLevel.mCurrentEnemies.size(); i++) {
+					Enemy potentialTarget = TowerDefense.mLevel.mCurrentEnemies.get(i);
+					if (!potentialTarget.isDead() && inRange(potentialTarget) && !potentialTarget.isSlow()) {
+						return TowerDefense.mLevel.mCurrentEnemies.get(i);
+					}
+				}
+				break;
 			}
-			break;
 		
-		case SCAN_FIRST_NOT_SLOW:
-			
-			// loop through all enemies
-			for (int i = 0; i < TowerDefense.mLevel.mCurrentEnemies.size(); i++) {
-				
-				Enemy potentialTarget = TowerDefense.mLevel.mCurrentEnemies.get(i);
-				
-				// check if enemy is targetable
-				if (!potentialTarget.isDead() && inRange(potentialTarget) && !potentialTarget.isSlow()) {
-					
-					// set the enemy as the target and stop scanning
-					mTarget = TowerDefense.mLevel.mCurrentEnemies.get(i);
-					break;
-					
-				}
-				
-			}
-			break;
-			
 		}
+		
+		return null;
 		
 	}
 	
 	// takes an enemy and checks whether it is in range
 	public boolean inRange(Enemy enemy) {
 		
-		float diffX = getX() - enemy.getX();
-		float diffY = getY() - enemy.getY();
+		float diffX = mCenterX - enemy.mCenterX;
+		float diffY = mCenterY - enemy.mCenterY;
 		double dist = Math.sqrt(Math.pow(diffX, 2) + Math.pow(diffY, 2));
 		
 		return (dist <= mRange);
 		
 	}
 	
+	/* NO LONGER USED, WAS USED FOR ROTATING SPRITE
 	// takes an enemy and calculates its direction in degrees
 	public float getDirection(Enemy enemy) {
 		return (float) (180 - Math.toDegrees(Math.atan2(enemy.getX() - getX(), enemy.getY() - getY())));
 	}
+	*/
 	
 	// creates a new round aimed at the current target
 	public void fireRound(int roundCode) {
@@ -200,7 +164,7 @@ public abstract class Tower extends Sprite {
 	@Override
     public boolean onAreaTouched(TouchEvent pSceneTouchEvent, float pTouchAreaLocalX, float pTouchAreaLocalY) {
         
-		if (pSceneTouchEvent.getAction() == TouchEvent.ACTION_DOWN) {
+		if (pSceneTouchEvent.getAction() == TouchEvent.ACTION_UP) {
 			if (TowerDefense.mLevel.mSelectionWheel != null && TowerDefense.mLevel.mSelectionWheel.mParent == this) {
 				TowerDefense.mLevel.mSelectionWheel.hide();
 			} else {
@@ -213,6 +177,23 @@ public abstract class Tower extends Sprite {
 	public void showSelectionWheel() {
 		if (TowerDefense.mLevel.mSelectionWheel != null) TowerDefense.mLevel.mSelectionWheel.hide();
 		TowerDefense.mLevel.mSelectionWheel = new SelectionWheel(mCenterX, mCenterY + mOffsetY / 2, this, SelectionWheel.TYPE_TOWER, mOptions, getVertexBufferObjectManager());
+	}
+	
+	public void sellTower() {
+		TowerDefense.SOUND_TOWER_SELL.play();
+		TowerDefense.mLevel.mCoins += Math.ceil(mPrice * TowerDefense.SALE_RATIO);
+		destroyTower();
+	}
+	
+	public void destroyTower() {
+		mBasePoint.mCurrentTower = null;
+		setVisible(false);
+		setTag(TowerDefense.TAG_DETACHABLE);
+	}
+	
+	public void upgradeTower(int towerCode) {
+		destroyTower();
+		mBasePoint.buildTower(towerCode);
 	}
 	
 }
@@ -240,6 +221,9 @@ class TestTower extends Tower {
 		mRound = ROUND;
 		mScanMethod = SCAN_METHOD;
 		mPrice = PRICE;
+		mOptions.add(Option.LOCKED);
+		mOptions.add(Option.BUILD_TOWER_FIRE);
+		mOptions.add(Option.LOCKED);
 		
 	}
 	

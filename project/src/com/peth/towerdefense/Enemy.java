@@ -2,7 +2,6 @@ package com.peth.towerdefense;
 
 import java.util.ArrayList;
 
-import org.andengine.entity.primitive.Rectangle;
 import org.andengine.entity.sprite.Sprite;
 import org.andengine.opengl.texture.region.ITextureRegion;
 import org.andengine.opengl.vbo.VertexBufferObjectManager;
@@ -23,11 +22,6 @@ public class Enemy extends Sprite {
 	public static final int STATE_SLOW = 2;
 	public static final int DURATION_SLOW = 300;
 	
-	// health bar constants
-	private static final float HEALTHBAR_WIDTH = 15;
-	private static final float HEALTHBAR_HEIGHT = 1;
-	private static final float HEALTHBAR_YOFFSET = 15;
-	
 	// globals
 	public float mCenterX;
 	public float mCenterY;
@@ -43,9 +37,7 @@ public class Enemy extends Sprite {
 	public int mCurrentTarget = 0;
 	public int mState = STATE_NORMAL;
 	public int mSlowCount = 0;
-	public Rectangle mHealthBarBorder;
-	public Rectangle mHealthBarBackground;
-	public Rectangle mHealthBarForeground;
+	public HealthBar mHealthBar;
 	public Thread mMoveThread;
 	
 	// constructor
@@ -61,18 +53,7 @@ public class Enemy extends Sprite {
 		mPath = path;
 		mTarget = mPath.get(mCurrentTarget);
 		mSpeedFactor = SPEED_NORMAL;
-		mHealthBarBorder = new Rectangle(mCenterX - HEALTHBAR_WIDTH / 2 - 1, mCenterY - HEALTHBAR_YOFFSET - 1, HEALTHBAR_WIDTH + 2, HEALTHBAR_HEIGHT + 2, getVertexBufferObjectManager());
-		mHealthBarBorder.setColor(0.3f, 0.3f, 0.3f);
-		mHealthBarBorder.setZIndex(800);
-		TowerDefense.mLevel.mScene.attachChild(mHealthBarBorder);
-		mHealthBarBackground = new Rectangle(mCenterX - HEALTHBAR_WIDTH / 2, mCenterY - HEALTHBAR_YOFFSET, HEALTHBAR_WIDTH, HEALTHBAR_HEIGHT, getVertexBufferObjectManager());
-		mHealthBarBackground.setColor(220f/255, 25f/255, 25f/255);
-		mHealthBarBackground.setZIndex(801);
-		TowerDefense.mLevel.mScene.attachChild(mHealthBarBackground);
-		mHealthBarForeground = new Rectangle(mCenterX - HEALTHBAR_WIDTH / 2, mCenterY - HEALTHBAR_YOFFSET, HEALTHBAR_WIDTH, HEALTHBAR_HEIGHT, getVertexBufferObjectManager());
-		mHealthBarForeground.setColor(100f/255, 220f/255, 20f/255);
-		mHealthBarForeground.setZIndex(802);
-		TowerDefense.mLevel.mScene.attachChild(mHealthBarForeground);
+		mHealthBar = new HealthBar(this, getVertexBufferObjectManager());
 		
 		// start moving to target
 		mMoveThread = new Thread(new MoveTask());
@@ -153,9 +134,7 @@ public class Enemy extends Sprite {
 		setPosition(getX() + dX, getY() + dY);
 		mCenterX += dX;
 		mCenterY += dY;
-		mHealthBarBorder.setPosition(mHealthBarBorder.getX() + dX, mHealthBarBorder.getY() + dY);
-		mHealthBarBackground.setPosition(mHealthBarBackground.getX() + dX, mHealthBarBackground.getY() + dY);
-		mHealthBarForeground.setPosition(mHealthBarForeground.getX() + dX, mHealthBarForeground.getY() + dY);
+		mHealthBar.follow();
 		
 	}
 	
@@ -182,14 +161,16 @@ public class Enemy extends Sprite {
 		TowerDefense.mLevel.mEnemiesFinished++;
 		
 		setVisible(false);
-		mHealthBarBorder.setVisible(false);
-		mHealthBarBackground.setVisible(false);
-		mHealthBarForeground.setVisible(false);
-		
 		setTag(TowerDefense.TAG_DETACHABLE);
-		mHealthBarBorder.setTag(TowerDefense.TAG_DETACHABLE);
-		mHealthBarBackground.setTag(TowerDefense.TAG_DETACHABLE);
-		mHealthBarForeground.setTag(TowerDefense.TAG_DETACHABLE);
+		
+		synchronized(TowerDefense.mLevel.mCurrentEnemies) {
+			TowerDefense.mLevel.mCurrentEnemies.remove(this);
+		}
+	}
+	
+	@Override
+	public void onDetached() {
+		mHealthBar.hide();
 	}
 	
 	public void finish() {
@@ -210,10 +191,8 @@ public class Enemy extends Sprite {
 		// enemy takes damage
 		mHealth -= damage;
 		
-		float percentage = mHealth / mMaxHealth;
-		
 		// update health bar
-		mHealthBarForeground.setWidth(HEALTHBAR_WIDTH * percentage);
+		mHealthBar.update(mHealth / mMaxHealth);
 		
 		// die if health is too low
 		if (mHealth <= 0) {
@@ -241,11 +220,6 @@ public class Enemy extends Sprite {
 	
 	public boolean isSlow() {
 		return (mState == STATE_SLOW);
-	}
-	
-	@Override
-	public void onDetached() {
-		TowerDefense.mLevel.mCurrentEnemies.remove(this);
 	}
 	
 }

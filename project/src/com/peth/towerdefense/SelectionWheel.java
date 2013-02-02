@@ -31,7 +31,7 @@ public class SelectionWheel extends Sprite {
 		super(x - (TEXTURE.getWidth() / 2), y - (TEXTURE.getHeight() / 2), TEXTURE, pVertexBufferObjectManager);
 		
 		// initialize variables
-		setZIndex(TowerDefense.ZINDEX_GUI);
+		setZIndex(TowerDefense.ZINDEX_HUD);
 		mCenterX = getX() + (TEXTURE.getWidth() / 2);
 		mCenterY = getY() + (TEXTURE.getHeight() / 2);
 		mParent = parent;
@@ -43,39 +43,47 @@ public class SelectionWheel extends Sprite {
 		// loop through all options
 		for (int i = 0; i < optionCodes.size(); i++) {
 			
-			// determine position
-			double angle = Math.toRadians(((double) 360 / optionCodes.size()) * i - 45);
-			float xPos = (float) (mCenterX + (Math.sin(angle) * mRadius));
-			float yPos = (float) (mCenterY - (Math.cos(angle) * mRadius));
-			
 			// create select options
 			if (type == TYPE_BASE) {
 				
+				// determine position
+				double angle = Math.toRadians(((double) 360 / optionCodes.size()) * i - 45);
+				float xPos = (float) (mCenterX + (Math.sin(angle) * mRadius));
+				float yPos = (float) (mCenterY - (Math.cos(angle) * mRadius));
+				
 				// create options
 				switch (optionCodes.get(i)) {
-				case Tower.TOWER_TEST:
+				case Option.LOCKED:
+					mOptions.add(new LockedOption(xPos, yPos, mParent, this, getVertexBufferObjectManager()));
+					break;
+				case Option.BUILD_TOWER_TEST:
 					mOptions.add(new TestTowerOption(xPos, yPos, mParent, this, getVertexBufferObjectManager()));
 					break;
-				case Tower.TOWER_SLOW:
+				case Option.BUILD_TOWER_SLOW:
 					mOptions.add(new SlowTowerOption(xPos, yPos, mParent, this, getVertexBufferObjectManager()));
 					break;
-				case Tower.TOWER_FIRE:
+				case Option.BUILD_TOWER_FIRE:
 					mOptions.add(new FireTowerOption(xPos, yPos, mParent, this, getVertexBufferObjectManager()));
-					break;
-				case Tower.TOWER_BOMB:
-					mOptions.add(new LockedOption(xPos, yPos, mParent, this, getVertexBufferObjectManager()));
 					break;
 				}
 				
 			} else if (type == TYPE_TOWER) {
 				
+				// determine position
+				double angle = Math.toRadians(((double) 360 / optionCodes.size()) * i - 135);
+				float xPos = (float) (mCenterX + (Math.sin(angle) * mRadius));
+				float yPos = (float) (mCenterY - (Math.cos(angle) * mRadius));
+				
 				// create options
 				switch (optionCodes.get(i)) {
-				case Option.UPGRADE_TOWER:
-					//mOptions.add(new UpgradeOption(xPos, yPos, mParent, this, getVertexBufferObjectManager()));
+				case Option.LOCKED:
+					mOptions.add(new LockedOption(xPos, yPos, mParent, this, getVertexBufferObjectManager()));
 					break;
 				case Option.SELL_TOWER:
 					mOptions.add(new SellOption(xPos, yPos, mParent, this, getVertexBufferObjectManager()));
+					break;
+				case Option.BUILD_TOWER_FIRE:
+					mOptions.add(new UpgradeOption(xPos, yPos, mParent, this, Tower.TOWER_FIRE, FireTower.PRICE, getVertexBufferObjectManager()));
 					break;
 				}
 				
@@ -85,17 +93,20 @@ public class SelectionWheel extends Sprite {
 		
 	}
 	
-	public void hide() {
-		
+	@Override
+	public void onDetached() {
 		for (int i = 0; i < mOptions.size(); i++) {
 			mOptions.get(i).setVisible(false);
 			mOptions.get(i).setTag(TowerDefense.TAG_DETACHABLE);
 		}
+	}
+	
+	public void hide() {
+		
+		TowerDefense.mLevel.mSelectionWheel = null;
 		
 		setVisible(false);
 		setTag(TowerDefense.TAG_DETACHABLE);
-		
-		TowerDefense.mLevel.mSelectionWheel = null;
 		
 	}
 	
