@@ -9,7 +9,7 @@ import org.andengine.opengl.vbo.VertexBufferObjectManager;
 public class StartButton extends Sprite {
 	
 	// constants
-	public static final ITextureRegion TEXTURE = TowerDefense.TEXTURE_BUTTON_START;
+	public static final ITextureRegion TEXTURE = TowerDefense.TEXTURE_HUD_START;
 	
 	// constructor
 	public StartButton(float x, float y, VertexBufferObjectManager pVertexBufferObjectManager) {

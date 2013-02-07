@@ -19,13 +19,16 @@ public class Background extends Sprite {
 		// register touch area (used for unselecting things)
 		TowerDefense.mLevel.mScene.registerTouchArea(this);
 		
+		// attach
+		TowerDefense.mLevel.mScene.attachChild(this);
+		
 	}
 	
 	@Override
     public boolean onAreaTouched(TouchEvent pSceneTouchEvent, float pTouchAreaLocalX, float pTouchAreaLocalY) {
         
 		if (pSceneTouchEvent.getAction() == TouchEvent.ACTION_DOWN) {
-			TowerDefense.mLevel.hideSelectionWheel();
+			TowerDefense.mLevel.unselect();
 		}
 		
         return true;

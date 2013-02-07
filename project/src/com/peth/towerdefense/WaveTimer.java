@@ -11,6 +11,7 @@ public class WaveTimer implements IUpdateHandler {
     // constructor
     public WaveTimer(float pInterval) {
     	this.mInterval = pInterval;
+    	this.mSecondsElapsed = this.mInterval;
     }
     
     // getters and setters
@@ -35,6 +36,8 @@ public class WaveTimer implements IUpdateHandler {
     
     // methods
     public void nextWave() {
+    	TowerDefense.mLevel.mCoins += Math.max(0, Math.round(mInterval - mSecondsElapsed));
+    	TowerDefense.SOUND_COINS.play();
     	this.mSecondsElapsed = this.mInterval;
     }
     

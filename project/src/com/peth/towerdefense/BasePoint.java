@@ -30,6 +30,9 @@ public class BasePoint extends Sprite {
 		// register touch handler
 		TowerDefense.mLevel.mScene.registerTouchArea(this);
 		
+		// attach
+		TowerDefense.mLevel.mScene.attachChild(this);
+		
 	}
 	
 	@Override
@@ -38,9 +41,9 @@ public class BasePoint extends Sprite {
 		if (pSceneTouchEvent.getAction() == TouchEvent.ACTION_UP) {
 			if (mCurrentTower == null) { //TODO instead of using this check, unregister the basepoint's touch area when a tower is built on it, and re-register it when its tower is sold
 				if (TowerDefense.mLevel.mSelectionWheel != null && TowerDefense.mLevel.mSelectionWheel.mParent == this) {
-					TowerDefense.mLevel.mSelectionWheel.hide();
+					TowerDefense.mLevel.unselect();
 				} else {
-					showSelectionWheel();
+					select();
 				}
 			}
 		}
@@ -71,9 +74,11 @@ public class BasePoint extends Sprite {
 		
 	}
 	
-	public void showSelectionWheel() {
+	public void select() {
 		
-		if (TowerDefense.mLevel.mSelectionWheel != null) TowerDefense.mLevel.mSelectionWheel.hide();
+		TowerDefense.mLevel.unselect();
+		
+		TowerDefense.mLevel.mSelection = this;
 		ArrayList<Integer> baseTowerOptions = new ArrayList<Integer>();
 		baseTowerOptions.add(Option.BUILD_TOWER_TEST);
 		baseTowerOptions.add(Option.BUILD_TOWER_SLOW);

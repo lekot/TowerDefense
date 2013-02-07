@@ -24,9 +24,12 @@ public abstract class Tower extends Sprite {
 	public float mCenterY;
 	public float mOffsetX;
 	public float mOffsetY;
+	public String mName;
 	public float mRange;
+	public Sprite mRangeCircle;
 	public int mRound;
 	public int mDelay;
+	public float mDamage;
 	public int mScanMethod;
 	public Enemy mTarget;
 	public float mPrice;
@@ -121,14 +124,14 @@ public abstract class Tower extends Sprite {
 	public boolean inRange(Enemy enemy) {
 		
 		float diffX = mCenterX - enemy.mCenterX;
-		float diffY = mCenterY - enemy.mCenterY;
+		float diffY = (mCenterY - enemy.mCenterY) / TowerDefense.PERSPECTIVE;
 		double dist = Math.sqrt(Math.pow(diffX, 2) + Math.pow(diffY, 2));
 		
 		return (dist <= mRange);
 		
 	}
 	
-	/* NO LONGER USED, WAS USED FOR ROTATING SPRITE
+	/* NO LONGER USED (WAS USED FOR ROTATING SPRITE), BUT MIGHT COME IN HANDY LATER
 	// takes an enemy and calculates its direction in degrees
 	public float getDirection(Enemy enemy) {
 		return (float) (180 - Math.toDegrees(Math.atan2(enemy.getX() - getX(), enemy.getY() - getY())));
@@ -166,13 +169,21 @@ public abstract class Tower extends Sprite {
         
 		if (pSceneTouchEvent.getAction() == TouchEvent.ACTION_UP) {
 			if (TowerDefense.mLevel.mSelectionWheel != null && TowerDefense.mLevel.mSelectionWheel.mParent == this) {
-				TowerDefense.mLevel.mSelectionWheel.hide();
+				TowerDefense.mLevel.unselect();
 			} else {
-				showSelectionWheel();
+				select();
 			}
 		}
         return true;
     }
+	
+	public void select() {
+		TowerDefense.mLevel.unselect();
+		TowerDefense.mLevel.mSelection = this;
+		mRangeCircle.setVisible(true);
+		showSelectionWheel();
+		TowerDefense.mHUD.showInfo(this);
+	}
 	
 	public void showSelectionWheel() {
 		if (TowerDefense.mLevel.mSelectionWheel != null) TowerDefense.mLevel.mSelectionWheel.hide();
@@ -180,7 +191,7 @@ public abstract class Tower extends Sprite {
 	}
 	
 	public void sellTower() {
-		TowerDefense.SOUND_TOWER_SELL.play();
+		TowerDefense.SOUND_COINS.play();
 		TowerDefense.mLevel.mCoins += Math.ceil(mPrice * TowerDefense.SALE_RATIO);
 		destroyTower();
 	}
@@ -203,6 +214,7 @@ class TestTower extends Tower {
 	// constants
 	public static final int OFFSET_X = 0;
 	public static final int OFFSET_Y = -30;
+	public static final String NAME = "Earth Tower";
 	public static final int PRICE = 70;
 	public static final int RANGE = 120;
 	public static final int DELAY = 800;
@@ -216,14 +228,25 @@ class TestTower extends Tower {
 		super(parent, OFFSET_X, OFFSET_Y, TEXTURE, pVertexBufferObjectManager);
 		
 		// set variables
+		mName = NAME;
 		mRange = RANGE;
 		mDelay = DELAY;
 		mRound = ROUND;
+		mDamage = (float) TestRound.DAMAGE * (1000f / mDelay);
 		mScanMethod = SCAN_METHOD;
 		mPrice = PRICE;
 		mOptions.add(Option.LOCKED);
 		mOptions.add(Option.BUILD_TOWER_FIRE);
 		mOptions.add(Option.LOCKED);
+		
+		// build range circle //TODO create a RangeCircle class
+		mRangeCircle = new Sprite(mCenterX - mRange, mCenterY - (mRange * TowerDefense.PERSPECTIVE), TowerDefense.TEXTURE_RANGECIRCLE, getVertexBufferObjectManager());
+		float scale = (mRange * 2) / TowerDefense.TEXTURE_RANGECIRCLE.getWidth();
+		mRangeCircle.setWidth(mRangeCircle.getWidth() * scale);
+		mRangeCircle.setHeight(mRangeCircle.getHeight() * scale);
+		mRangeCircle.setZIndex(TowerDefense.ZINDEX_TOWERS - 1);
+		mRangeCircle.setVisible(false);
+		TowerDefense.mLevel.mScene.attachChild(mRangeCircle);
 		
 	}
 	
@@ -234,6 +257,7 @@ class SlowTower extends Tower {
 	// constants
 	public static final int OFFSET_X = 0;
 	public static final int OFFSET_Y = -30;
+	public static final String NAME = "Water Tower";
 	public static final int PRICE = 70;
 	public static final int RANGE = 100;
 	public static final int DELAY = 2000;
@@ -247,11 +271,25 @@ class SlowTower extends Tower {
 		super(parent, OFFSET_X, OFFSET_Y, TEXTURE, pVertexBufferObjectManager);
 		
 		// set variables
+		mName = NAME;
 		mRange = RANGE;
 		mDelay = DELAY;
 		mRound = ROUND;
+		mDamage = (float) SlowRound.DAMAGE * (1000f / mDelay);
 		mScanMethod = SCAN_METHOD;
 		mPrice = PRICE;
+		mOptions.add(Option.LOCKED);
+		mOptions.add(Option.BUILD_TOWER_FIRE);
+		mOptions.add(Option.LOCKED);
+		
+		// build range circle //TODO create a RangeCircle class
+		mRangeCircle = new Sprite(mCenterX - mRange, mCenterY - (mRange * TowerDefense.PERSPECTIVE), TowerDefense.TEXTURE_RANGECIRCLE, getVertexBufferObjectManager());
+		float scale = (mRange * 2) / TowerDefense.TEXTURE_RANGECIRCLE.getWidth();
+		mRangeCircle.setWidth(mRangeCircle.getWidth() * scale);
+		mRangeCircle.setHeight(mRangeCircle.getHeight() * scale);
+		mRangeCircle.setZIndex(TowerDefense.ZINDEX_TOWERS - 1);
+		mRangeCircle.setVisible(false);
+		TowerDefense.mLevel.mScene.attachChild(mRangeCircle);
 		
 	}
 	
@@ -262,6 +300,7 @@ class FireTower extends Tower {
 	// constants
 	public static final int OFFSET_X = 0;
 	public static final int OFFSET_Y = -30;
+	public static final String NAME = "Fire Tower";
 	public static final int PRICE = 120;
 	public static final int RANGE = 100;
 	public static final int DELAY = 5;
@@ -275,11 +314,25 @@ class FireTower extends Tower {
 		super(parent, OFFSET_X, OFFSET_Y, TEXTURE, pVertexBufferObjectManager);
 		
 		// set variables
+		mName = NAME;
 		mRange = RANGE;
 		mDelay = DELAY;
 		mRound = ROUND;
+		mDamage = (float) FireRound.DAMAGE * (1000f / mDelay);
 		mScanMethod = SCAN_METHOD;
 		mPrice = PRICE;
+		mOptions.add(Option.LOCKED);
+		mOptions.add(Option.BUILD_TOWER_FIRE);
+		mOptions.add(Option.LOCKED);
+		
+		// build range circle //TODO create a RangeCircle class
+		mRangeCircle = new Sprite(mCenterX - mRange, mCenterY - (mRange * TowerDefense.PERSPECTIVE), TowerDefense.TEXTURE_RANGECIRCLE, getVertexBufferObjectManager());
+		float scale = (mRange * 2) / TowerDefense.TEXTURE_RANGECIRCLE.getWidth();
+		mRangeCircle.setWidth(mRangeCircle.getWidth() * scale);
+		mRangeCircle.setHeight(mRangeCircle.getHeight() * scale);
+		mRangeCircle.setZIndex(TowerDefense.ZINDEX_TOWERS - 1);
+		mRangeCircle.setVisible(false);
+		TowerDefense.mLevel.mScene.attachChild(mRangeCircle);
 		
 	}
 	

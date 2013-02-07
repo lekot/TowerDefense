@@ -36,6 +36,9 @@ public class SpawnPoint extends Sprite {
         
         // set visibility
      	setVisible(false);
+     	
+     	// attach
+     	TowerDefense.mLevel.mScene.attachChild(this);
         
     }
 	
@@ -90,6 +93,10 @@ public class SpawnPoint extends Sprite {
 	
 	// spawns the requested enemy
 	public void spawn(int enemyCode) {
+		
+		// reset the wavetimer, so that the WAVE_DELAY interval only starts afer all enemies have been spawned
+		//TODO this is a very crude solution. find something better, preferably inside of the WaveTimer class
+		TowerDefense.mLevel.mWaveTimer.reset();
 		
 		// determine which enemy was requested and spawn it
 		switch (enemyCode) {
