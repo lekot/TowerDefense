@@ -16,8 +16,8 @@ public class StartButton extends Sprite {
 		super(x - TEXTURE.getWidth(), y - TEXTURE.getHeight(), TEXTURE, pVertexBufferObjectManager);
 		
 		setZIndex(TowerDefense.ZINDEX_HUD);
-		TowerDefense.mLevel.mScene.attachChild(this);
-		TowerDefense.mLevel.mScene.registerTouchArea(this);
+		TowerDefense.mSceneManager.getCurrentLevel().attachChild(this);
+		TowerDefense.mSceneManager.getCurrentLevel().registerTouchArea(this);
 		
 	}
 	
@@ -26,8 +26,8 @@ public class StartButton extends Sprite {
     public boolean onAreaTouched(TouchEvent pSceneTouchEvent, float pTouchAreaLocalX, float pTouchAreaLocalY) {
         
 		if (pSceneTouchEvent.getAction() == TouchEvent.ACTION_UP) {
-			if (!TowerDefense.mLevel.mStarted) {
-				TowerDefense.mLevel.start();
+			if (!TowerDefense.mSceneManager.getCurrentLevel().mStarted) {
+				TowerDefense.mSceneManager.getCurrentLevel().start();
 			}
 		}
         return true;

@@ -28,10 +28,10 @@ public class BasePoint extends Sprite {
 		mCenterY = getY() + (TEXTURE.getHeight() / 2);
 		
 		// register touch handler
-		TowerDefense.mLevel.mScene.registerTouchArea(this);
+		TowerDefense.mSceneManager.getCurrentLevel().registerTouchArea(this);
 		
 		// attach
-		TowerDefense.mLevel.mScene.attachChild(this);
+		TowerDefense.mSceneManager.getCurrentLevel().attachChild(this);
 		
 	}
 	
@@ -40,8 +40,8 @@ public class BasePoint extends Sprite {
         
 		if (pSceneTouchEvent.getAction() == TouchEvent.ACTION_UP) {
 			if (mCurrentTower == null) { //TODO instead of using this check, unregister the basepoint's touch area when a tower is built on it, and re-register it when its tower is sold
-				if (TowerDefense.mLevel.mSelectionWheel != null && TowerDefense.mLevel.mSelectionWheel.mParent == this) {
-					TowerDefense.mLevel.unselect();
+				if (TowerDefense.mSceneManager.getCurrentLevel().mSelectionWheel != null && TowerDefense.mSceneManager.getCurrentLevel().mSelectionWheel.mParent == this) {
+					TowerDefense.mSceneManager.getCurrentLevel().unselect();
 				} else {
 					select();
 				}
@@ -57,34 +57,37 @@ public class BasePoint extends Sprite {
 		switch (towerCode) {
 		case Tower.TOWER_TEST:
 			mCurrentTower = new TestTower(this, getVertexBufferObjectManager());
-			TowerDefense.mLevel.mScene.attachChild(mCurrentTower);
-			TowerDefense.mLevel.mCoins -= TestTower.PRICE;
 			break;
 		case Tower.TOWER_SLOW:
 			mCurrentTower = new SlowTower(this, getVertexBufferObjectManager());
-			TowerDefense.mLevel.mScene.attachChild(mCurrentTower);
-			TowerDefense.mLevel.mCoins -= SlowTower.PRICE;
 			break;
 		case Tower.TOWER_FIRE:
 			mCurrentTower = new FireTower(this, getVertexBufferObjectManager());
-			TowerDefense.mLevel.mScene.attachChild(mCurrentTower);
-			TowerDefense.mLevel.mCoins -= FireTower.PRICE;
+			break;
+		case Tower.TOWER_FLAMETHROWER:
+			mCurrentTower = new FlamethrowerTower(this, getVertexBufferObjectManager());
+			break;
+		case Tower.TOWER_PEBBLE:
+			mCurrentTower = new PebbleTower(this, getVertexBufferObjectManager());
 			break;
 		}
+		
+		TowerDefense.mSceneManager.getCurrentLevel().attachChild(mCurrentTower);
+		TowerDefense.mSceneManager.getCurrentLevel().mCoins -= mCurrentTower.mPrice;
 		
 	}
 	
 	public void select() {
 		
-		TowerDefense.mLevel.unselect();
+		TowerDefense.mSceneManager.getCurrentLevel().unselect();
 		
-		TowerDefense.mLevel.mSelection = this;
+		TowerDefense.mSceneManager.getCurrentLevel().mSelection = this;
 		ArrayList<Integer> baseTowerOptions = new ArrayList<Integer>();
 		baseTowerOptions.add(Option.BUILD_TOWER_TEST);
 		baseTowerOptions.add(Option.BUILD_TOWER_SLOW);
 		baseTowerOptions.add(Option.BUILD_TOWER_FIRE);
 		baseTowerOptions.add(Option.LOCKED);
-		TowerDefense.mLevel.mSelectionWheel = new SelectionWheel(mCenterX, mCenterY, this, SelectionWheel.TYPE_BASE, baseTowerOptions, getVertexBufferObjectManager());
+		TowerDefense.mSceneManager.getCurrentLevel().mSelectionWheel = new SelectionWheel(mCenterX, mCenterY, this, SelectionWheel.TYPE_BASE, baseTowerOptions, getVertexBufferObjectManager());
 		
 	}
 	

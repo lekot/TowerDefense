@@ -26,7 +26,7 @@ public class WayPoint extends Sprite {
 		setVisible(false);
 		
 		// attach
-		TowerDefense.mLevel.mScene.attachChild(this);
+		TowerDefense.mSceneManager.getCurrentLevel().attachChild(this);
 		
 	}
 	

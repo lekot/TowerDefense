@@ -55,6 +55,10 @@ public class Enemy extends Sprite {
 		mSpeedFactor = SPEED_NORMAL;
 		mHealthBar = new HealthBar(this, getVertexBufferObjectManager());
 		
+		// attach
+		TowerDefense.mSceneManager.getCurrentLevel().mCurrentEnemies.add(this);
+		TowerDefense.mSceneManager.getCurrentLevel().attachChild(this);
+		
 		// start moving to target
 		mMoveThread = new Thread(new MoveTask());
 		mMoveThread.start();
@@ -147,7 +151,7 @@ public class Enemy extends Sprite {
 			TowerDefense.SOUND_ENEMY_DEATHCRY.get(random).play();
 			
 			// gain stuff
-			TowerDefense.mLevel.mCoins += mCoins;
+			TowerDefense.mSceneManager.getCurrentLevel().mCoins += mCoins;
 			
 			// remove enemy
 			removeEnemy();
@@ -158,13 +162,13 @@ public class Enemy extends Sprite {
 	
 	public void removeEnemy() {
 		mState = STATE_DEAD;
-		TowerDefense.mLevel.mEnemiesFinished++;
+		TowerDefense.mSceneManager.getCurrentLevel().mEnemiesFinished++;
 		
 		setVisible(false);
 		setTag(TowerDefense.TAG_DETACHABLE);
 		
-		synchronized(TowerDefense.mLevel.mCurrentEnemies) {
-			TowerDefense.mLevel.mCurrentEnemies.remove(this);
+		synchronized(TowerDefense.mSceneManager.getCurrentLevel().mCurrentEnemies) {
+			TowerDefense.mSceneManager.getCurrentLevel().mCurrentEnemies.remove(this);
 		}
 	}
 	
@@ -179,7 +183,7 @@ public class Enemy extends Sprite {
 		TowerDefense.mVibrator.vibrate(20);
 		
 		// player takes damage
-		TowerDefense.mLevel.getDamage(1);
+		TowerDefense.mSceneManager.getCurrentLevel().getDamage(1);
 		
 		// remove enemy
 		removeEnemy();

@@ -9,18 +9,11 @@ public class Background extends Sprite {
 	
 	// constructor
 	public Background(float pX, float pY, ITextureRegion pTextureRegion, VertexBufferObjectManager pVertexBufferObjectManager) {
-		
-		// super constructor
 		super(pX, pY, pTextureRegion, pVertexBufferObjectManager);
 		
-		// set variables
 		setZIndex(TowerDefense.ZINDEX_BACKGROUND);
-		
-		// register touch area (used for unselecting things)
-		TowerDefense.mLevel.mScene.registerTouchArea(this);
-		
-		// attach
-		TowerDefense.mLevel.mScene.attachChild(this);
+		if (TowerDefense.mSceneManager.getCurrentScene() instanceof LevelScene) TowerDefense.mSceneManager.getCurrentLevel().registerTouchArea(this);
+		TowerDefense.mSceneManager.getCurrentScene().attachChild(this);
 		
 	}
 	
@@ -28,7 +21,7 @@ public class Background extends Sprite {
     public boolean onAreaTouched(TouchEvent pSceneTouchEvent, float pTouchAreaLocalX, float pTouchAreaLocalY) {
         
 		if (pSceneTouchEvent.getAction() == TouchEvent.ACTION_DOWN) {
-			TowerDefense.mLevel.unselect();
+			TowerDefense.mSceneManager.getCurrentLevel().unselect();
 		}
 		
         return true;

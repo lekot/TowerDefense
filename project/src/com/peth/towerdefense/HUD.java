@@ -29,22 +29,22 @@ public class HUD {
 		
 		// set up main hud
 		mMainHUD = new Sprite(20, 20, TowerDefense.TEXTURE_HUD_MAIN, pVertexBufferObjectManager);
-		mHealthText = new Text(65, 31, TowerDefense.FONT_NORMAL, "" + TowerDefense.mLevel.mHealth, 32, pVertexBufferObjectManager);
-		mCoinsText = new Text(122, 31, TowerDefense.FONT_NORMAL, "" + TowerDefense.mLevel.mCoins, 32, pVertexBufferObjectManager);
-		mWavesText = new Text(76, 54, TowerDefense.FONT_NORMAL, "WAVE " + TowerDefense.mLevel.mWaveCurrent + "/" + TowerDefense.mLevel.mWavesTotal, 32, pVertexBufferObjectManager);
+		mHealthText = new Text(65, 31, TowerDefense.FONT_NORMAL, "" + TowerDefense.mSceneManager.getCurrentLevel().mHealth, 32, pVertexBufferObjectManager);
+		mCoinsText = new Text(122, 31, TowerDefense.FONT_NORMAL, "" + TowerDefense.mSceneManager.getCurrentLevel().mCoins, 32, pVertexBufferObjectManager);
+		mWavesText = new Text(76, 54, TowerDefense.FONT_NORMAL, "WAVE " + TowerDefense.mSceneManager.getCurrentLevel().mWaveCurrent + "/" + TowerDefense.mSceneManager.getCurrentLevel().mWavesTotal, 32, pVertexBufferObjectManager);
 		mMainHUD.setZIndex(TowerDefense.ZINDEX_HUD);
 		mHealthText.setZIndex(TowerDefense.ZINDEX_HUD);
 		mCoinsText.setZIndex(TowerDefense.ZINDEX_HUD);
 		mWavesText.setZIndex(TowerDefense.ZINDEX_HUD);
-		TowerDefense.mLevel.mScene.attachChild(mMainHUD);
-		TowerDefense.mLevel.mScene.attachChild(mHealthText);
-		TowerDefense.mLevel.mScene.attachChild(mCoinsText);
-		TowerDefense.mLevel.mScene.attachChild(mWavesText);
+		TowerDefense.mSceneManager.getCurrentLevel().attachChild(mMainHUD);
+		TowerDefense.mSceneManager.getCurrentLevel().attachChild(mHealthText);
+		TowerDefense.mSceneManager.getCurrentLevel().attachChild(mCoinsText);
+		TowerDefense.mSceneManager.getCurrentLevel().attachChild(mWavesText);
 		
 		// set up bottom hud
 		mBottomHUD = new Sprite(0, TowerDefense.CAMERA_HEIGHT - TowerDefense.TEXTURE_HUD_BOTTOM.getHeight(), TowerDefense.TEXTURE_HUD_BOTTOM, pVertexBufferObjectManager);
 		mBottomHUD.setZIndex(TowerDefense.ZINDEX_HUD);
-		TowerDefense.mLevel.mScene.attachChild(mBottomHUD);
+		TowerDefense.mSceneManager.getCurrentLevel().attachChild(mBottomHUD);
 		mStartButton = new StartButton(TowerDefense.CAMERA_WIDTH - 10, TowerDefense.CAMERA_HEIGHT, pVertexBufferObjectManager);
 		
 		// set up info hud
@@ -61,12 +61,12 @@ public class HUD {
 		mTowerDamageText.setZIndex(TowerDefense.ZINDEX_HUD);
 		mTowerDelayText.setZIndex(TowerDefense.ZINDEX_HUD);
 		mTowerRangeText.setZIndex(TowerDefense.ZINDEX_HUD);
-		TowerDefense.mLevel.mScene.attachChild(mInfoHUD);
-		TowerDefense.mLevel.mScene.attachChild(mTowerIcon);
-		TowerDefense.mLevel.mScene.attachChild(mTowerNameText);
-		TowerDefense.mLevel.mScene.attachChild(mTowerDamageText);
-		TowerDefense.mLevel.mScene.attachChild(mTowerDelayText);
-		TowerDefense.mLevel.mScene.attachChild(mTowerRangeText);
+		TowerDefense.mSceneManager.getCurrentLevel().attachChild(mInfoHUD);
+		TowerDefense.mSceneManager.getCurrentLevel().attachChild(mTowerIcon);
+		TowerDefense.mSceneManager.getCurrentLevel().attachChild(mTowerNameText);
+		TowerDefense.mSceneManager.getCurrentLevel().attachChild(mTowerDamageText);
+		TowerDefense.mSceneManager.getCurrentLevel().attachChild(mTowerDelayText);
+		TowerDefense.mSceneManager.getCurrentLevel().attachChild(mTowerRangeText);
 		hideInfo();
 		
 		// set up skills hud
@@ -76,25 +76,25 @@ public class HUD {
 		mSkillsHUD.setZIndex(TowerDefense.ZINDEX_HUD);
 		mSkill1.setZIndex(TowerDefense.ZINDEX_HUD);
 		mSkill2.setZIndex(TowerDefense.ZINDEX_HUD);
-		TowerDefense.mLevel.mScene.attachChild(mSkillsHUD);
-		TowerDefense.mLevel.mScene.attachChild(mSkill1);
-		TowerDefense.mLevel.mScene.attachChild(mSkill2);
+		TowerDefense.mSceneManager.getCurrentLevel().attachChild(mSkillsHUD);
+		TowerDefense.mSceneManager.getCurrentLevel().attachChild(mSkill1);
+		TowerDefense.mSceneManager.getCurrentLevel().attachChild(mSkill2);
 		
 		// set up the options hud //TODO make OptionsButton and PauseButton classes
 		mOptionsButton = new Sprite(TowerDefense.CAMERA_WIDTH - 20 - TowerDefense.TEXTURE_BUTTON_OPTIONS.getWidth(), 20, TowerDefense.TEXTURE_BUTTON_OPTIONS, pVertexBufferObjectManager);
 		mPauseButton = new Sprite(TowerDefense.CAMERA_WIDTH - 70 - TowerDefense.TEXTURE_BUTTON_PAUSE.getWidth(), 20, TowerDefense.TEXTURE_BUTTON_PAUSE, pVertexBufferObjectManager);
 		mOptionsButton.setZIndex(TowerDefense.ZINDEX_HUD);
 		mPauseButton.setZIndex(TowerDefense.ZINDEX_HUD);
-		TowerDefense.mLevel.mScene.attachChild(mOptionsButton);
-		TowerDefense.mLevel.mScene.attachChild(mPauseButton);
+		TowerDefense.mSceneManager.getCurrentLevel().attachChild(mOptionsButton);
+		TowerDefense.mSceneManager.getCurrentLevel().attachChild(mPauseButton);
 		
 	}
 	
 	public void update() {
 		
-		mHealthText.setText("" + TowerDefense.mLevel.mHealth);
-		mCoinsText.setText("" + TowerDefense.mLevel.mCoins);
-		mWavesText.setText("WAVE " + TowerDefense.mLevel.mWaveCurrent + "/" + TowerDefense.mLevel.mWavesTotal);
+		mHealthText.setText("" + TowerDefense.mSceneManager.getCurrentLevel().mHealth);
+		mCoinsText.setText("" + TowerDefense.mSceneManager.getCurrentLevel().mCoins);
+		mWavesText.setText("WAVE " + TowerDefense.mSceneManager.getCurrentLevel().mWaveCurrent + "/" + TowerDefense.mSceneManager.getCurrentLevel().mWavesTotal);
 		
 	}
 	

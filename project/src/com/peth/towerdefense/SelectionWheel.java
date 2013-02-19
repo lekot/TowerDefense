@@ -38,7 +38,7 @@ public class SelectionWheel extends Sprite {
 		mOptions = new ArrayList<Option>();
 		
 		// attach
-		TowerDefense.mLevel.mScene.attachChild(this);
+		TowerDefense.mSceneManager.getCurrentLevel().attachChild(this);
 			
 		// loop through all options
 		for (int i = 0; i < optionCodes.size(); i++) {
@@ -83,7 +83,13 @@ public class SelectionWheel extends Sprite {
 					mOptions.add(new SellOption(xPos, yPos, mParent, this, getVertexBufferObjectManager()));
 					break;
 				case Option.BUILD_TOWER_FIRE:
-					mOptions.add(new UpgradeOption(xPos, yPos, mParent, this, Tower.TOWER_FIRE, FireTower.PRICE, getVertexBufferObjectManager()));
+					mOptions.add(new FireTowerOption(xPos, yPos, mParent, this, getVertexBufferObjectManager()));
+					break;
+				case Option.BUILD_TOWER_FLAMETHROWER:
+					mOptions.add(new FlamethrowerTowerOption(xPos, yPos, mParent, this, getVertexBufferObjectManager()));
+					break;
+				case Option.BUILD_TOWER_PEBBLE:
+					mOptions.add(new PebbleTowerOption(xPos, yPos, mParent, this, getVertexBufferObjectManager()));
 					break;
 				}
 				
@@ -103,7 +109,7 @@ public class SelectionWheel extends Sprite {
 	
 	public void hide() {
 		
-		TowerDefense.mLevel.mSelectionWheel = null;
+		TowerDefense.mSceneManager.getCurrentLevel().mSelectionWheel = null;
 		
 		setVisible(false);
 		setTag(TowerDefense.TAG_DETACHABLE);

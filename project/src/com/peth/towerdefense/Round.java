@@ -10,7 +10,9 @@ public abstract class Round extends Sprite {
 	// round constants
 	public static final int ROUND_TEST = 0;
 	public static final int ROUND_SLOW = 1;
-	public static final int ROUND_FIRE = 2;
+	public static final int ROUND_FIREBALL = 2;
+	public static final int ROUND_FLAME = 3;
+	public static final int ROUND_PEBBLE = 4;
 	
 	// effect constants
 	public static final int EFFECT_NONE = 0;
@@ -69,7 +71,7 @@ public abstract class Round extends Sprite {
 				mCenterY += dY;
 				
 				// increase size of the sprite if it is a fire bullet
-				if (mType == ROUND_FIRE) {
+				if (mType == ROUND_FLAME) {
 					setScale(Math.min(1, getScaleX() + 0.025f));
 				}
 				
@@ -123,6 +125,33 @@ class TestRound extends Round {
 	
 }
 
+class PebbleRound extends Round {
+	
+	// constants
+	public static final int TYPE = ROUND_PEBBLE;
+	public static final int SPEED = 5;
+	public static final double DAMAGE = 8;
+	public static final ITextureRegion TEXTURE = TowerDefense.TEXTURE_ROUND_TEST;
+	
+	// constructor
+	public PebbleRound(Enemy target, float x, float y, VertexBufferObjectManager pVertexBufferObjectManager) {
+		
+		// superconstructor
+		super(x, y, TEXTURE, pVertexBufferObjectManager);
+		
+		// set variables
+		mType = TYPE;
+		mTarget = target;
+		mSpeed = SPEED;
+		mDamage = DAMAGE;
+		
+		// play sound
+		TowerDefense.SOUND_PROJECTILE_ARROW.play();
+		
+	}
+	
+}
+
 class SlowRound extends Round {
 	
 	// constants
@@ -149,16 +178,16 @@ class SlowRound extends Round {
 	
 }
 
-class FireRound extends Round {
+class FlameRound extends Round {
 	
 	// constants
-	public static final int TYPE = ROUND_FIRE;
+	public static final int TYPE = ROUND_FLAME;
 	public static final int SPEED = 4;
 	public static final double DAMAGE = 0.2;
 	public static final ITextureRegion TEXTURE = TowerDefense.TEXTURE_ROUND_FIRE;
 	
 	// constructor
-	public FireRound(Enemy target, float x, float y, VertexBufferObjectManager pVertexBufferObjectManager) {
+	public FlameRound(Enemy target, float x, float y, VertexBufferObjectManager pVertexBufferObjectManager) {
 		
 		// superconstructor
 		super(x, y, TEXTURE, pVertexBufferObjectManager);
@@ -170,6 +199,31 @@ class FireRound extends Round {
 		mDamage = DAMAGE;
 		setScale(0.2f);
 		setAlpha(0.25f);
+		
+	}
+	
+}
+
+class FireBallRound extends Round {
+	
+	// constants
+	public static final int TYPE = ROUND_FIREBALL;
+	public static final int SPEED = 4;
+	public static final double DAMAGE = 30;
+	public static final ITextureRegion TEXTURE = TowerDefense.TEXTURE_ROUND_FIRE;
+	
+	// constructor
+	public FireBallRound(Enemy target, float x, float y, VertexBufferObjectManager pVertexBufferObjectManager) {
+		
+		// superconstructor
+		super(x, y, TEXTURE, pVertexBufferObjectManager);
+		
+		// set variables
+		mType = TYPE;
+		mTarget = target;
+		mSpeed = SPEED;
+		mDamage = DAMAGE;
+		setScale(0.5f);
 		
 	}
 	

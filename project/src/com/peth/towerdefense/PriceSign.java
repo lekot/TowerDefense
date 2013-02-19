@@ -33,8 +33,8 @@ public class PriceSign extends Sprite {
 		mPriceText = new Text(mCenterX, mCenterY - 5, TowerDefense.FONT_SMALL, "" + (int) mPrice, 3, getVertexBufferObjectManager());
 		mPriceText.setZIndex(TowerDefense.ZINDEX_HUD + 1);
 		mPriceText.setPosition(mCenterX - mPriceText.getWidth() / 2, mCenterY - 5);
-		if (TowerDefense.mLevel.mCoins < mPrice) mPriceText.setColor(0.8f, 0.2f, 0.2f);
-		TowerDefense.mLevel.mScene.attachChild(mPriceText);
+		if (TowerDefense.mSceneManager.getCurrentLevel().mCoins < mPrice) mPriceText.setColor(0.8f, 0.2f, 0.2f);
+		TowerDefense.mSceneManager.getCurrentLevel().attachChild(mPriceText);
 		
 	}
 	

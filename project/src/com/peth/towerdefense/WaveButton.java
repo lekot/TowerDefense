@@ -17,8 +17,8 @@ public class WaveButton extends Sprite {
 		float[] position = getPosition(parent);
 		setPosition(position[0] - TEXTURE.getWidth() / 2, position[1] - TEXTURE.getHeight() / 2);
 		setZIndex(TowerDefense.ZINDEX_HUD);
-		TowerDefense.mLevel.mScene.attachChild(this);
-		TowerDefense.mLevel.mScene.registerTouchArea(this);
+		TowerDefense.mSceneManager.getCurrentLevel().attachChild(this);
+		TowerDefense.mSceneManager.getCurrentLevel().registerTouchArea(this);
 		
 	}
 	
@@ -27,10 +27,10 @@ public class WaveButton extends Sprite {
     public boolean onAreaTouched(TouchEvent pSceneTouchEvent, float pTouchAreaLocalX, float pTouchAreaLocalY) {
         
 		if (pSceneTouchEvent.getAction() == TouchEvent.ACTION_UP) {
-			if (!TowerDefense.mLevel.mStarted) {
-				TowerDefense.mLevel.start();
+			if (!TowerDefense.mSceneManager.getCurrentLevel().mStarted) {
+				TowerDefense.mSceneManager.getCurrentLevel().start();
 			} else {
-				TowerDefense.mLevel.mWaveTimer.nextWave();
+				TowerDefense.mSceneManager.getCurrentLevel().mWaveTimer.nextWave();
 			}
 		}
         return true;
@@ -47,12 +47,12 @@ public class WaveButton extends Sprite {
 	
 	public void hide() {
 		setVisible(false);
-		TowerDefense.mLevel.mScene.unregisterTouchArea(this);
+		TowerDefense.mSceneManager.getCurrentLevel().unregisterTouchArea(this);
 	}
 	
 	public void show() {
 		setVisible(true);
-		TowerDefense.mLevel.mScene.registerTouchArea(this);
+		TowerDefense.mSceneManager.getCurrentLevel().registerTouchArea(this);
 	}
 	
 }

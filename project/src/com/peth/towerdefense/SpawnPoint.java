@@ -38,7 +38,7 @@ public class SpawnPoint extends Sprite {
      	setVisible(false);
      	
      	// attach
-     	TowerDefense.mLevel.mScene.attachChild(this);
+     	attachChild(this);
         
     }
 	
@@ -74,7 +74,7 @@ public class SpawnPoint extends Sprite {
 				}
 				
 				// after all enemies have spawned, if this wasn't the last wave, show the wave timer again
-				if (TowerDefense.mLevel.mWaveCurrent < mWaveSet.size()) {
+				if (TowerDefense.mSceneManager.getCurrentLevel().mWaveCurrent < mWaveSet.size()) {
 					try {
 						Thread.sleep(WAVEBUTTON_DELAY);
 					} catch (InterruptedException e) {
@@ -96,14 +96,12 @@ public class SpawnPoint extends Sprite {
 		
 		// reset the wavetimer, so that the WAVE_DELAY interval only starts afer all enemies have been spawned
 		//TODO this is a very crude solution. find something better, preferably inside of the WaveTimer class
-		TowerDefense.mLevel.mWaveTimer.reset();
+		TowerDefense.mSceneManager.getCurrentLevel().mWaveTimer.reset();
 		
 		// determine which enemy was requested and spawn it
 		switch (enemyCode) {
 		case Enemy.ENEMY_TEST:
-			Enemy enemy = new TestEnemy(mPath, mCenterX, mCenterY, getVertexBufferObjectManager());
-			TowerDefense.mLevel.mCurrentEnemies.add(enemy);
-			TowerDefense.mLevel.mScene.attachChild(enemy);
+			new TestEnemy(mPath, mCenterX, mCenterY, getVertexBufferObjectManager());
 			break;
 		}
 		

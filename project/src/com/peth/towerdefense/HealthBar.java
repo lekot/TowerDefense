@@ -23,19 +23,19 @@ public class HealthBar extends Rectangle {
 		mParent = parent;
 		setColor(0.3f, 0.3f, 0.3f);
 		setZIndex(800);
-		TowerDefense.mLevel.mScene.attachChild(this);
+		TowerDefense.mSceneManager.getCurrentLevel().attachChild(this);
 		
 		// set background
 		mHealthBackground = new Rectangle(mParent.mCenterX - WIDTH / 2, mParent.mCenterY - YOFFSET, WIDTH, HEIGHT, getVertexBufferObjectManager());
 		mHealthBackground.setColor(220f/255, 25f/255, 25f/255);
 		mHealthBackground.setZIndex(801);
-		TowerDefense.mLevel.mScene.attachChild(mHealthBackground);
+		TowerDefense.mSceneManager.getCurrentLevel().attachChild(mHealthBackground);
 		
 		// set foreground
 		mHealthForeground = new Rectangle(mParent.mCenterX - WIDTH / 2, mParent.mCenterY - YOFFSET, WIDTH, HEIGHT, getVertexBufferObjectManager());
 		mHealthForeground.setColor(100f/255, 220f/255, 20f/255);
 		mHealthForeground.setZIndex(802);
-		TowerDefense.mLevel.mScene.attachChild(mHealthForeground);
+		TowerDefense.mSceneManager.getCurrentLevel().attachChild(mHealthForeground);
 		
 	}
 	

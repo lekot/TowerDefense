@@ -36,17 +36,17 @@ public class WaveTimer implements IUpdateHandler {
     
     // methods
     public void nextWave() {
-    	TowerDefense.mLevel.mCoins += Math.max(0, Math.round(mInterval - mSecondsElapsed));
+    	TowerDefense.mSceneManager.getCurrentLevel().mCoins += Math.max(0, Math.round(mInterval - mSecondsElapsed));
     	TowerDefense.SOUND_COINS.play();
     	this.mSecondsElapsed = this.mInterval;
     }
     
 	public void launchWave() {
-		if (TowerDefense.mLevel.mWaveCurrent < TowerDefense.mLevel.mWavesTotal) {
+		if (TowerDefense.mSceneManager.getCurrentLevel().mWaveCurrent < TowerDefense.mSceneManager.getCurrentLevel().mWavesTotal) {
 			TowerDefense.SOUND_WAVE.play();
-			TowerDefense.mLevel.mWaveCurrent++;
-			for (int i = 0; i < TowerDefense.mLevel.mSpawnPoints.size(); i++) {
-				TowerDefense.mLevel.mSpawnPoints.get(i).launchWave(TowerDefense.mLevel.mWaveCurrent - 1);
+			TowerDefense.mSceneManager.getCurrentLevel().mWaveCurrent++;
+			for (int i = 0; i < TowerDefense.mSceneManager.getCurrentLevel().mSpawnPoints.size(); i++) {
+				TowerDefense.mSceneManager.getCurrentLevel().mSpawnPoints.get(i).launchWave(TowerDefense.mSceneManager.getCurrentLevel().mWaveCurrent - 1);
 			}
 		}
 	}
