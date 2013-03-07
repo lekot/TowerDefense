@@ -26,14 +26,16 @@ public class WaveButton extends Sprite {
 	@Override
     public boolean onAreaTouched(TouchEvent pSceneTouchEvent, float pTouchAreaLocalX, float pTouchAreaLocalY) {
         
-		if (pSceneTouchEvent.getAction() == TouchEvent.ACTION_UP) {
-			if (!TowerDefense.mSceneManager.getCurrentLevel().mStarted) {
-				TowerDefense.mSceneManager.getCurrentLevel().start();
-			} else {
-				TowerDefense.mSceneManager.getCurrentLevel().mWaveTimer.nextWave();
+		if (!TowerDefense.mSceneManager.getCurrentLevel().mPaused) {
+			if (pSceneTouchEvent.getAction() == TouchEvent.ACTION_UP) {
+				if (!TowerDefense.mSceneManager.getCurrentLevel().mStarted) {
+					TowerDefense.mSceneManager.getCurrentLevel().start();
+				} else {
+					TowerDefense.mSceneManager.getCurrentLevel().mWaveTimer.nextWave();
+				}
 			}
 		}
-        return true;
+	    return true;
         
     }
 	

@@ -59,28 +59,42 @@ public class SpawnPoint extends Sprite {
 				for (int i = 0; i < currentWave.size(); i++) {
 					
 					// check if the spawnpoint was deactivated
-					if (!mActive) break;
+					if (!mActive) return;
 					
-					// spawn an enemy
-					spawn(currentWave.get(i));
+					if (!TowerDefense.mSceneManager.getCurrentLevel().mPaused) {
 					
-					// sleep to add delay between spawns
-					try {
-						Thread.sleep(SPAWN_DELAY);
-					} catch (InterruptedException e) {
-						e.printStackTrace();
+						// spawn an enemy
+						spawn(currentWave.get(i));
+						
+						// if this was not the last spawn
+						if (i < currentWave.size() - 1) {
+							
+							// sleep to add delay between spawns
+							try {
+								Thread.sleep(SPAWN_DELAY);
+							} catch (InterruptedException e) {
+								e.printStackTrace();
+							}
+							
+						} else {
+							
+							// if this was the last spawn, if this wasn't the last wave, show the wave timer again
+							if (TowerDefense.mSceneManager.getCurrentLevel().mWaveCurrent < mWaveSet.size()) {
+								try {
+									Thread.sleep(WAVEBUTTON_DELAY);
+								} catch (InterruptedException e) {
+									e.printStackTrace();
+								}
+								mWaveButton.show();
+							}
+						}
+						
+					} else {
+						
+						i--;
+						
 					}
 					
-				}
-				
-				// after all enemies have spawned, if this wasn't the last wave, show the wave timer again
-				if (TowerDefense.mSceneManager.getCurrentLevel().mWaveCurrent < mWaveSet.size()) {
-					try {
-						Thread.sleep(WAVEBUTTON_DELAY);
-					} catch (InterruptedException e) {
-						e.printStackTrace();
-					}
-					mWaveButton.show();
 				}
 				
 			}

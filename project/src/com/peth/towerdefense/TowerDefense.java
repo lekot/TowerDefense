@@ -69,6 +69,7 @@ public class TowerDefense extends SimpleBaseGameActivity {
 	public static ITextureRegion TEXTURE_BUTTON_WAVE;
 	public static ITextureRegion TEXTURE_BUTTON_PAUSE;
 	public static ITextureRegion TEXTURE_BUTTON_OPTIONS;
+	public static ITextureRegion TEXTURE_PAUSE_BANNER;
 	public static final int START_DELAY = 1000;
 	public static final double SALE_RATIO = 0.5;
 	public static final int CAMERA_WIDTH = 800;
@@ -388,6 +389,12 @@ public class TowerDefense extends SimpleBaseGameActivity {
 		            return getAssets().open("gfx/button_options.png");
 		        }
 		    });
+		    ITexture texturePauseBanner = new BitmapTexture(this.getTextureManager(), new IInputStreamOpener() {
+		        @Override
+		        public InputStream open() throws IOException {
+		            return getAssets().open("gfx/pause.png");
+		        }
+		    });
 		    
 		    // load bitmap textures into VRAM
 		    textureBackgroundTitle.load();
@@ -428,6 +435,7 @@ public class TowerDefense extends SimpleBaseGameActivity {
 		    textureRangeCircle.load();
 		    textureButtonPause.load();
 		    textureButtonOptions.load();
+		    texturePauseBanner.load();
 		    
 		    // set up texture regions
 		    TowerDefense.BACKGROUND_TITLE = TextureRegionFactory.extractFromTexture(textureBackgroundTitle);
@@ -468,6 +476,7 @@ public class TowerDefense extends SimpleBaseGameActivity {
 		    TowerDefense.TEXTURE_RANGECIRCLE = TextureRegionFactory.extractFromTexture(textureRangeCircle);
 		    TowerDefense.TEXTURE_BUTTON_PAUSE = TextureRegionFactory.extractFromTexture(textureButtonPause);
 		    TowerDefense.TEXTURE_BUTTON_OPTIONS = TextureRegionFactory.extractFromTexture(textureButtonOptions);
+		    TowerDefense.TEXTURE_PAUSE_BANNER = TextureRegionFactory.extractFromTexture(texturePauseBanner);
 		    
 		} catch (IOException e) {
 		    Debug.e(e);

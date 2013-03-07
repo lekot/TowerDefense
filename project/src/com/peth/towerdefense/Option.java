@@ -1,6 +1,5 @@
 package com.peth.towerdefense;
 
-import org.andengine.entity.Entity;
 import org.andengine.entity.sprite.Sprite;
 import org.andengine.input.touch.TouchEvent;
 import org.andengine.opengl.texture.region.ITextureRegion;
@@ -19,21 +18,21 @@ public class Option extends Sprite {
 	public static final int BUILD_TOWER_PEBBLE = 6;
 	
 	// globals
-	public Entity mParent;
+	public BasePoint mBasePoint;
 	public float mCenterX;
 	public float mCenterY;
 	public boolean mAvailable = true;
 	public Sprite mPriceSign;
 	
 	// constructor
-	public Option(float x, float y, Entity parent, SelectionWheel wheel, ITextureRegion texture, VertexBufferObjectManager pVertexBufferObjectManager) {
+	public Option(float x, float y, BasePoint basePoint, ITextureRegion texture, VertexBufferObjectManager pVertexBufferObjectManager) {
 		
 		// superconstructor
 		super(x - (texture.getWidth() / 2), y - (texture.getHeight() / 2), texture, pVertexBufferObjectManager);
 		
 		// set variables
 		setZIndex(TowerDefense.ZINDEX_HUD);
-		mParent = parent;
+		mBasePoint = basePoint;
 		mCenterX = x;
 		mCenterY = y;
 		
@@ -59,8 +58,8 @@ class TestTowerOption extends Option {
 	public static final ITextureRegion TEXTURE = TowerDefense.TEXTURE_OPTION_ARCHER;
 	
 	// constructor
-	public TestTowerOption(float x, float y, Entity parent, SelectionWheel wheel, VertexBufferObjectManager pVertexBufferObjectManager) {
-		super(x, y, parent, wheel, TEXTURE, pVertexBufferObjectManager);
+	public TestTowerOption(float x, float y, BasePoint basePoint, VertexBufferObjectManager pVertexBufferObjectManager) {
+		super(x, y, basePoint, TEXTURE, pVertexBufferObjectManager);
 		
 		// set variables
 		mPriceSign = new PriceSign(mCenterX, mCenterY + PriceSign.YOFFSET, TestTower.PRICE, getVertexBufferObjectManager());
@@ -72,10 +71,14 @@ class TestTowerOption extends Option {
 	@Override
     public boolean onAreaTouched(TouchEvent pSceneTouchEvent, float pTouchAreaLocalX, float pTouchAreaLocalY) {
         
-		if (pSceneTouchEvent.getAction() == TouchEvent.ACTION_UP) {
-			if (mAvailable) {
-				((BasePoint) mParent).buildTower(Tower.TOWER_TEST);
-				TowerDefense.mSceneManager.getCurrentLevel().hideSelectionWheel();
+		if (!TowerDefense.mSceneManager.getCurrentLevel().mPaused) {
+			if (pSceneTouchEvent.getAction() == TouchEvent.ACTION_UP) {
+				if (mAvailable) {
+					mBasePoint.mCurrentTower = new TestTower(mBasePoint, getVertexBufferObjectManager());
+					TowerDefense.mSceneManager.getCurrentLevel().attachChild(mBasePoint.mCurrentTower);
+					TowerDefense.mSceneManager.getCurrentLevel().mCoins -= mBasePoint.mCurrentTower.mPrice;
+					TowerDefense.mSceneManager.getCurrentLevel().hideSelectionWheel();
+				}
 			}
 		}
         return true;
@@ -89,8 +92,8 @@ class PebbleTowerOption extends Option {
 	public static final ITextureRegion TEXTURE = TowerDefense.TEXTURE_OPTION_ARCHER;
 	
 	// constructor
-	public PebbleTowerOption(float x, float y, Entity parent, SelectionWheel wheel, VertexBufferObjectManager pVertexBufferObjectManager) {
-		super(x, y, parent, wheel, TEXTURE, pVertexBufferObjectManager);
+	public PebbleTowerOption(float x, float y, BasePoint basePoint, VertexBufferObjectManager pVertexBufferObjectManager) {
+		super(x, y, basePoint, TEXTURE, pVertexBufferObjectManager);
 		
 		// set variables
 		mPriceSign = new PriceSign(mCenterX, mCenterY + PriceSign.YOFFSET, PebbleTower.PRICE, getVertexBufferObjectManager());
@@ -102,10 +105,15 @@ class PebbleTowerOption extends Option {
 	@Override
     public boolean onAreaTouched(TouchEvent pSceneTouchEvent, float pTouchAreaLocalX, float pTouchAreaLocalY) {
         
-		if (pSceneTouchEvent.getAction() == TouchEvent.ACTION_UP) {
-			if (mAvailable) {
-				((Tower) mParent).upgradeTower(Tower.TOWER_PEBBLE);
-				TowerDefense.mSceneManager.getCurrentLevel().hideSelectionWheel();
+		if (!TowerDefense.mSceneManager.getCurrentLevel().mPaused) {
+			if (pSceneTouchEvent.getAction() == TouchEvent.ACTION_UP) {
+				if (mAvailable) {
+					mBasePoint.destroyTower();
+					mBasePoint.mCurrentTower = new PebbleTower(mBasePoint, getVertexBufferObjectManager());
+					TowerDefense.mSceneManager.getCurrentLevel().attachChild(mBasePoint.mCurrentTower);
+					TowerDefense.mSceneManager.getCurrentLevel().mCoins -= mBasePoint.mCurrentTower.mPrice;
+					TowerDefense.mSceneManager.getCurrentLevel().hideSelectionWheel();
+				}
 			}
 		}
         return true;
@@ -119,8 +127,8 @@ class SlowTowerOption extends Option {
 	public static final ITextureRegion TEXTURE = TowerDefense.TEXTURE_OPTION_INFANTRY;
 	
 	// constructor
-	public SlowTowerOption(float x, float y, Entity parent, SelectionWheel wheel, VertexBufferObjectManager pVertexBufferObjectManager) {
-		super(x, y, parent, wheel, TEXTURE, pVertexBufferObjectManager);
+	public SlowTowerOption(float x, float y, BasePoint basePoint, VertexBufferObjectManager pVertexBufferObjectManager) {
+		super(x, y, basePoint, TEXTURE, pVertexBufferObjectManager);
 		
 		// set variables
 		mPriceSign = new PriceSign(mCenterX, mCenterY + PriceSign.YOFFSET, SlowTower.PRICE, getVertexBufferObjectManager());
@@ -132,10 +140,14 @@ class SlowTowerOption extends Option {
 	@Override
     public boolean onAreaTouched(TouchEvent pSceneTouchEvent, float pTouchAreaLocalX, float pTouchAreaLocalY) {
         
-		if (pSceneTouchEvent.getAction() == TouchEvent.ACTION_UP) {
-			if (mAvailable) {
-				((BasePoint) mParent).buildTower(Tower.TOWER_SLOW);
-				TowerDefense.mSceneManager.getCurrentLevel().hideSelectionWheel();
+		if (!TowerDefense.mSceneManager.getCurrentLevel().mPaused) {
+			if (pSceneTouchEvent.getAction() == TouchEvent.ACTION_UP) {
+				if (mAvailable) {
+					mBasePoint.mCurrentTower = new TestTower(mBasePoint, getVertexBufferObjectManager());
+					TowerDefense.mSceneManager.getCurrentLevel().attachChild(mBasePoint.mCurrentTower);
+					TowerDefense.mSceneManager.getCurrentLevel().mCoins -= mBasePoint.mCurrentTower.mPrice;
+					TowerDefense.mSceneManager.getCurrentLevel().hideSelectionWheel();
+				}
 			}
 		}
         return true;
@@ -150,8 +162,8 @@ class FireTowerOption extends Option {
 	public static final ITextureRegion TEXTURE_UNAVAILABLE = TowerDefense.TEXTURE_OPTION_MAGICIAN_UNAVAILABLE; //TODO use this
 	
 	// constructor
-	public FireTowerOption(float x, float y, Entity parent, SelectionWheel wheel, VertexBufferObjectManager pVertexBufferObjectManager) {
-		super(x, y, parent, wheel, TEXTURE, pVertexBufferObjectManager);
+	public FireTowerOption(float x, float y, BasePoint basePoint, VertexBufferObjectManager pVertexBufferObjectManager) {
+		super(x, y, basePoint, TEXTURE, pVertexBufferObjectManager);
 		
 		// set variables
 		mPriceSign = new PriceSign(mCenterX, mCenterY + PriceSign.YOFFSET, FireTower.PRICE, getVertexBufferObjectManager());
@@ -163,10 +175,14 @@ class FireTowerOption extends Option {
 	@Override
     public boolean onAreaTouched(TouchEvent pSceneTouchEvent, float pTouchAreaLocalX, float pTouchAreaLocalY) {
         
-		if (pSceneTouchEvent.getAction() == TouchEvent.ACTION_UP) {
-			if (mAvailable) {
-				((BasePoint) mParent).buildTower(Tower.TOWER_FIRE);
-				TowerDefense.mSceneManager.getCurrentLevel().hideSelectionWheel();
+		if (!TowerDefense.mSceneManager.getCurrentLevel().mPaused) {
+			if (pSceneTouchEvent.getAction() == TouchEvent.ACTION_UP) {
+				if (mAvailable) {
+					mBasePoint.mCurrentTower = new FireTower(mBasePoint, getVertexBufferObjectManager());
+					TowerDefense.mSceneManager.getCurrentLevel().attachChild(mBasePoint.mCurrentTower);
+					TowerDefense.mSceneManager.getCurrentLevel().mCoins -= mBasePoint.mCurrentTower.mPrice;
+					TowerDefense.mSceneManager.getCurrentLevel().hideSelectionWheel();
+				}
 			}
 		}
         return true;
@@ -181,8 +197,8 @@ class FlamethrowerTowerOption extends Option {
 	public static final ITextureRegion TEXTURE_UNAVAILABLE = TowerDefense.TEXTURE_OPTION_MAGICIAN_UNAVAILABLE; //TODO use this
 	
 	// constructor
-	public FlamethrowerTowerOption(float x, float y, Entity parent, SelectionWheel wheel, VertexBufferObjectManager pVertexBufferObjectManager) {
-		super(x, y, parent, wheel, TEXTURE, pVertexBufferObjectManager);
+	public FlamethrowerTowerOption(float x, float y, BasePoint basePoint, VertexBufferObjectManager pVertexBufferObjectManager) {
+		super(x, y, basePoint, TEXTURE, pVertexBufferObjectManager);
 		
 		// set variables
 		mPriceSign = new PriceSign(mCenterX, mCenterY + PriceSign.YOFFSET, FlamethrowerTower.PRICE, getVertexBufferObjectManager());
@@ -194,52 +210,21 @@ class FlamethrowerTowerOption extends Option {
 	@Override
     public boolean onAreaTouched(TouchEvent pSceneTouchEvent, float pTouchAreaLocalX, float pTouchAreaLocalY) {
         
-		if (pSceneTouchEvent.getAction() == TouchEvent.ACTION_UP) {
-			if (mAvailable) {
-				((Tower) mParent).upgradeTower(Tower.TOWER_FLAMETHROWER);
-				TowerDefense.mSceneManager.getCurrentLevel().hideSelectionWheel();
+		if (!TowerDefense.mSceneManager.getCurrentLevel().mPaused) {
+			if (pSceneTouchEvent.getAction() == TouchEvent.ACTION_UP) {
+				if (mAvailable) {
+					mBasePoint.destroyTower();
+					mBasePoint.mCurrentTower = new FlamethrowerTower(mBasePoint, getVertexBufferObjectManager());
+					TowerDefense.mSceneManager.getCurrentLevel().attachChild(mBasePoint.mCurrentTower);
+					TowerDefense.mSceneManager.getCurrentLevel().mCoins -= mBasePoint.mCurrentTower.mPrice;
+					TowerDefense.mSceneManager.getCurrentLevel().hideSelectionWheel();
+				}
 			}
 		}
         return true;
     }
 	
 }
-
-/*
-class UpgradeOption extends Option {
-	
-	// constants
-	public static final ITextureRegion TEXTURE = TowerDefense.TEXTURE_OPTION_UPGRADE;
-	
-	// globals
-	public int mTowerCode;
-	
-	// constructor
-	public UpgradeOption(float x, float y, Entity parent, SelectionWheel wheel, int towerCode, float price, VertexBufferObjectManager pVertexBufferObjectManager) {
-		super(x, y, parent, wheel, TEXTURE, pVertexBufferObjectManager);
-		
-		// set variables
-		mTowerCode = towerCode;
-		mPriceSign = new PriceSign(mCenterX, mCenterY + PriceSign.YOFFSET, price, getVertexBufferObjectManager());
-		TowerDefense.mSceneManager.getCurrentLevel().attachChild(mPriceSign);
-		mAvailable = (TowerDefense.mSceneManager.getCurrentLevel().mCoins < price) ? false : true;
-		
-	}
-	
-	@Override
-    public boolean onAreaTouched(TouchEvent pSceneTouchEvent, float pTouchAreaLocalX, float pTouchAreaLocalY) {
-        
-		if (pSceneTouchEvent.getAction() == TouchEvent.ACTION_UP) {
-			if (mAvailable) {
-				((Tower) mParent).upgradeTower(mTowerCode);
-				TowerDefense.mSceneManager.getCurrentLevel().hideSelectionWheel();
-			}
-		}
-        return true;
-    }
-	
-}
-*/
 
 class SellOption extends Option {
 	
@@ -247,14 +232,16 @@ class SellOption extends Option {
 	public static final ITextureRegion TEXTURE = TowerDefense.TEXTURE_OPTION_SELL;
 	
 	// constructor
-	public SellOption(float x, float y, Entity parent, SelectionWheel wheel, VertexBufferObjectManager pVertexBufferObjectManager) {
-		super(x, y, parent, wheel, TEXTURE, pVertexBufferObjectManager);
+	public SellOption(float x, float y, BasePoint basePoint, VertexBufferObjectManager pVertexBufferObjectManager) {
+		super(x, y, basePoint, TEXTURE, pVertexBufferObjectManager);
 	}
 	
 	@Override
     public boolean onAreaTouched(TouchEvent pSceneTouchEvent, float pTouchAreaLocalX, float pTouchAreaLocalY) {
-		((Tower) mParent).sellTower();
-		TowerDefense.mSceneManager.getCurrentLevel().hideSelectionWheel();
+		if (!TowerDefense.mSceneManager.getCurrentLevel().mPaused) {
+			mBasePoint.sellTower();
+			TowerDefense.mSceneManager.getCurrentLevel().hideSelectionWheel();
+		}
         return true;
     }
 	
@@ -266,8 +253,8 @@ class LockedOption extends Option {
 	public static final ITextureRegion TEXTURE = TowerDefense.TEXTURE_OPTION_LOCKED;
 	
 	// constructor
-	public LockedOption(float x, float y, Entity parent, SelectionWheel wheel, VertexBufferObjectManager pVertexBufferObjectManager) {
-		super(x, y, parent, wheel, TEXTURE, pVertexBufferObjectManager);
+	public LockedOption(float x, float y, BasePoint basePoint, VertexBufferObjectManager pVertexBufferObjectManager) {
+		super(x, y, basePoint, TEXTURE, pVertexBufferObjectManager);
 	}
 	
 	@Override

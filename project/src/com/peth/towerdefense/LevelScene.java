@@ -32,6 +32,7 @@ public class LevelScene extends Scene {
 	public SelectionWheel mSelectionWheel;
 	public Music mMusic;
 	public boolean mStarted;
+	public boolean mPaused;
 	public boolean mEnded;
 	public IEntity mSelection;
 	
@@ -56,7 +57,7 @@ public class LevelScene extends Scene {
 		
 		for (int i = 0; i < this.getChildCount(); i++) {
 			IEntity child = this.getChildByIndex(i);
-			if (child.getTag() == TowerDefense.TAG_DETACHABLE) {
+			if (child != null && child.getTag() == TowerDefense.TAG_DETACHABLE) {
 				this.detachChild(child);
 			}
 		}
@@ -71,8 +72,8 @@ public class LevelScene extends Scene {
 		
 		if (this.mHealth <= 0) {
 			this.stop();
-			Sprite defeatSprite = new Sprite(TowerDefense.CAMERA_WIDTH/2 - TowerDefense.TEXTURE_DEFEAT.getWidth()/2, TowerDefense.CAMERA_HEIGHT/2 - 100 - TowerDefense.TEXTURE_DEFEAT.getHeight()/2, TowerDefense.TEXTURE_DEFEAT, mVertexBufferObjectManager);
-			defeatSprite.setZIndex(TowerDefense.ZINDEX_HUD);
+			Sprite defeatSprite = new Sprite(TowerDefense.CAMERA_WIDTH/2 - TowerDefense.TEXTURE_DEFEAT.getWidth()/2, TowerDefense.CAMERA_HEIGHT/2 - TowerDefense.TEXTURE_DEFEAT.getHeight()/2, TowerDefense.TEXTURE_DEFEAT, mVertexBufferObjectManager);
+			defeatSprite.setZIndex(TowerDefense.ZINDEX_HUD + 12);
 			this.attachChild(defeatSprite);
 			return true;
 		}
@@ -94,6 +95,7 @@ public class LevelScene extends Scene {
 				this.unregisterTouchArea((ITouchArea) child);
 			}
 		}
+		this.mWaveTimer.mActive = false;
 		this.stopMusic();
 		this.mEnded = true;
 	}
@@ -103,7 +105,7 @@ public class LevelScene extends Scene {
 		if (!isDead() && this.mEnemiesFinished == this.mEnemiesTotal) {
 			this.stop();
 			Sprite victorySprite = new Sprite(TowerDefense.CAMERA_WIDTH/2 - TowerDefense.TEXTURE_VICTORY.getWidth()/2, TowerDefense.CAMERA_HEIGHT/2 - TowerDefense.TEXTURE_VICTORY.getHeight()/2, TowerDefense.TEXTURE_VICTORY, mVertexBufferObjectManager);
-			victorySprite.setZIndex(TowerDefense.ZINDEX_HUD);
+			victorySprite.setZIndex(TowerDefense.ZINDEX_HUD + 12);
 			this.attachChild(victorySprite);
 			TowerDefense.SOUND_VICTORY.play();
 		}

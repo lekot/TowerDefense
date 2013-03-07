@@ -20,8 +20,10 @@ public class Background extends Sprite {
 	@Override
     public boolean onAreaTouched(TouchEvent pSceneTouchEvent, float pTouchAreaLocalX, float pTouchAreaLocalY) {
         
-		if (pSceneTouchEvent.getAction() == TouchEvent.ACTION_DOWN) {
-			TowerDefense.mSceneManager.getCurrentLevel().unselect();
+		if (!TowerDefense.mSceneManager.getCurrentLevel().mPaused) {
+			if (pSceneTouchEvent.getAction() == TouchEvent.ACTION_DOWN) {
+				TowerDefense.mSceneManager.getCurrentLevel().unselect();
+			}
 		}
 		
         return true;

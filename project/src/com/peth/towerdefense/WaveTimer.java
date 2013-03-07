@@ -6,7 +6,8 @@ public class WaveTimer implements IUpdateHandler {
 
     // globals        
     private float mInterval;
-    private float mSecondsElapsed;    
+    private float mSecondsElapsed;
+    public boolean mActive = true;
     
     // constructor
     public WaveTimer(float pInterval) {
@@ -22,11 +23,16 @@ public class WaveTimer implements IUpdateHandler {
     // super methods
     @Override
     public void onUpdate(float pSecondsElapsed) {
-        this.mSecondsElapsed += pSecondsElapsed;
-        if (this.mSecondsElapsed >= this.mInterval) {
-            this.mSecondsElapsed -= this.mInterval;
-            this.launchWave();
-        }
+    	
+    	if (mActive) {
+	    	if (!TowerDefense.mSceneManager.getCurrentLevel().mPaused) {
+		        this.mSecondsElapsed += pSecondsElapsed;
+		        if (this.mSecondsElapsed >= this.mInterval) {
+		            this.mSecondsElapsed -= this.mInterval;
+		            this.launchWave();
+		        }
+	    	}
+    	}
     }
     
     @Override

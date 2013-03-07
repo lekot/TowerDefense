@@ -7,13 +7,6 @@ import org.andengine.opengl.vbo.VertexBufferObjectManager;
 //TODO rename this class Projectile
 public abstract class Round extends Sprite {
 	
-	// round constants
-	public static final int ROUND_TEST = 0;
-	public static final int ROUND_SLOW = 1;
-	public static final int ROUND_FIREBALL = 2;
-	public static final int ROUND_FLAME = 3;
-	public static final int ROUND_PEBBLE = 4;
-	
 	// effect constants
 	public static final int EFFECT_NONE = 0;
 	public static final int EFFECT_SLOW = 1;
@@ -27,6 +20,7 @@ public abstract class Round extends Sprite {
 	public double mDamage;
 	public int mEffect = EFFECT_NONE;
 	public Thread mMoveThread;
+	public float mGrowth = 0;
 	
 	// constructor
 	public Round(float x, float y, ITextureRegion texture, VertexBufferObjectManager pVertexBufferObjectManager) {
@@ -53,33 +47,37 @@ public abstract class Round extends Sprite {
 			// while enemy has not reached target (null check is for the sake of preventing thread collisions)
 			while (mTarget != null) {
 				
-				// calculate distance to targeted waypoint
-				float distX = mTarget.mCenterX - mCenterX;
-				float distY = mTarget.mCenterY - mCenterY;
-				float dist = (float) Math.sqrt(Math.pow(distX, 2) + Math.pow(distY, 2));
+				if (!TowerDefense.mSceneManager.getCurrentLevel().mPaused) {
 				
-				// if close enough to targeted waypoint, skip to acquiring next waypoint
-				if (dist < mSpeed) {
-					break;
-				}
+					// calculate distance to targeted waypoint
+					float distX = mTarget.mCenterX - mCenterX;
+					float distY = mTarget.mCenterY - mCenterY;
+					float dist = (float) Math.sqrt(Math.pow(distX, 2) + Math.pow(distY, 2));
+					
+					// if close enough to targeted waypoint, skip to acquiring next waypoint
+					if (dist < mSpeed) {
+						break;
+					}
+					
+					// otherwise move in direction of targeted waypoint
+					float dX = distX / dist * (float) mSpeed;
+					float dY = distY / dist * (float) mSpeed;
+					setPosition(getX() + dX, getY() + dY);
+					mCenterX += dX;
+					mCenterY += dY;
+					
+					// increase size of the sprite if it is a fire bullet
+					if (mGrowth > 0) {
+						setScale(Math.min(1, getScaleX() + mGrowth));
+					}
+					
+					// sleep for animation's sake
+					try {
+						Thread.sleep(10);
+					} catch (InterruptedException e) {
+						e.printStackTrace();
+					}
 				
-				// otherwise move in direction of targeted waypoint
-				float dX = distX / dist * (float) mSpeed;
-				float dY = distY / dist * (float) mSpeed;
-				setPosition(getX() + dX, getY() + dY);
-				mCenterX += dX;
-				mCenterY += dY;
-				
-				// increase size of the sprite if it is a fire bullet
-				if (mType == ROUND_FLAME) {
-					setScale(Math.min(1, getScaleX() + 0.025f));
-				}
-				
-				// sleep for animation's sake
-				try {
-					Thread.sleep(10);
-				} catch (InterruptedException e) {
-					e.printStackTrace();
 				}
 				
 			}
@@ -101,7 +99,6 @@ public abstract class Round extends Sprite {
 class TestRound extends Round {
 	
 	// constants
-	public static final int TYPE = ROUND_TEST;
 	public static final int SPEED = 5;
 	public static final double DAMAGE = 15;
 	public static final ITextureRegion TEXTURE = TowerDefense.TEXTURE_ROUND_TEST;
@@ -113,7 +110,6 @@ class TestRound extends Round {
 		super(x, y, TEXTURE, pVertexBufferObjectManager);
 		
 		// set variables
-		mType = TYPE;
 		mTarget = target;
 		mSpeed = SPEED;
 		mDamage = DAMAGE;
@@ -128,7 +124,6 @@ class TestRound extends Round {
 class PebbleRound extends Round {
 	
 	// constants
-	public static final int TYPE = ROUND_PEBBLE;
 	public static final int SPEED = 5;
 	public static final double DAMAGE = 8;
 	public static final ITextureRegion TEXTURE = TowerDefense.TEXTURE_ROUND_TEST;
@@ -140,7 +135,6 @@ class PebbleRound extends Round {
 		super(x, y, TEXTURE, pVertexBufferObjectManager);
 		
 		// set variables
-		mType = TYPE;
 		mTarget = target;
 		mSpeed = SPEED;
 		mDamage = DAMAGE;
@@ -155,7 +149,6 @@ class PebbleRound extends Round {
 class SlowRound extends Round {
 	
 	// constants
-	public static final int TYPE = ROUND_SLOW;
 	public static final int SPEED = 5;
 	public static final float DAMAGE = 0;
 	public static final ITextureRegion TEXTURE = TowerDefense.TEXTURE_ROUND_SLOW;
@@ -168,7 +161,6 @@ class SlowRound extends Round {
 		super(x, y, TEXTURE, pVertexBufferObjectManager);
 		
 		// set variables
-		mType = TYPE;
 		mTarget = target;
 		mSpeed = SPEED;
 		mDamage = DAMAGE;
@@ -181,7 +173,6 @@ class SlowRound extends Round {
 class FlameRound extends Round {
 	
 	// constants
-	public static final int TYPE = ROUND_FLAME;
 	public static final int SPEED = 4;
 	public static final double DAMAGE = 0.2;
 	public static final ITextureRegion TEXTURE = TowerDefense.TEXTURE_ROUND_FIRE;
@@ -193,10 +184,10 @@ class FlameRound extends Round {
 		super(x, y, TEXTURE, pVertexBufferObjectManager);
 		
 		// set variables
-		mType = TYPE;
 		mTarget = target;
 		mSpeed = SPEED;
 		mDamage = DAMAGE;
+		mGrowth = 0.025f;
 		setScale(0.2f);
 		setAlpha(0.25f);
 		
@@ -207,7 +198,6 @@ class FlameRound extends Round {
 class FireBallRound extends Round {
 	
 	// constants
-	public static final int TYPE = ROUND_FIREBALL;
 	public static final int SPEED = 4;
 	public static final double DAMAGE = 30;
 	public static final ITextureRegion TEXTURE = TowerDefense.TEXTURE_ROUND_FIRE;
@@ -219,7 +209,6 @@ class FireBallRound extends Round {
 		super(x, y, TEXTURE, pVertexBufferObjectManager);
 		
 		// set variables
-		mType = TYPE;
 		mTarget = target;
 		mSpeed = SPEED;
 		mDamage = DAMAGE;

@@ -20,6 +20,7 @@ public class Enemy extends Sprite {
 	public static final int STATE_DEAD = 0;
 	public static final int STATE_NORMAL = 1;
 	public static final int STATE_SLOW = 2;
+	public static final int STATE_PAUSED = 3;
 	public static final int DURATION_SLOW = 300;
 	
 	// globals
@@ -38,7 +39,7 @@ public class Enemy extends Sprite {
 	public int mState = STATE_NORMAL;
 	public int mSlowCount = 0;
 	public HealthBar mHealthBar;
-	public Thread mMoveThread;
+	public Thread mLifeThread;
 	
 	// constructor
 	public Enemy(ArrayList<WayPoint> path, float x, float y, ITextureRegion texture, VertexBufferObjectManager pVertexBufferObjectManager) {
@@ -60,8 +61,8 @@ public class Enemy extends Sprite {
 		TowerDefense.mSceneManager.getCurrentLevel().attachChild(this);
 		
 		// start moving to target
-		mMoveThread = new Thread(new MoveTask());
-		mMoveThread.start();
+		mLifeThread = new Thread(new MoveTask());
+		mLifeThread.start();
 		
 	}
 	
@@ -70,45 +71,50 @@ public class Enemy extends Sprite {
 		@Override
 		public void run() {
 			
-			while (true) { // follow path
+			while (true) { // while end of path is not reached, follow path
 				
-				while (true) { // take a step
+				while (true) { // while target is not reached, take a step
 					
 					// end movement thread if dead
 					if (mState == STATE_DEAD) {
 						return;
 					}
 					
-					// deal with being slowed
-					if (mState == STATE_SLOW) {
-						mSlowCount++;
-						if (mSlowCount == DURATION_SLOW) {
-							mState = STATE_NORMAL;
-							mSpeedFactor = SPEED_NORMAL;
-							mSlowCount = 0;
+					// if level is paused, skip the movement phase
+					if (!TowerDefense.mSceneManager.getCurrentLevel().mPaused) {
+					
+						// deal with being slowed
+						if (mState == STATE_SLOW) {
+							mSlowCount++;
+							if (mSlowCount == DURATION_SLOW) {
+								mState = STATE_NORMAL;
+								mSpeedFactor = SPEED_NORMAL;
+								mSlowCount = 0;
+							}
 						}
-					}
-					
-					// calculate distance to targeted waypoint
-					float distX = mTarget.mCenterX - (mCenterX + mOffsetX);
-					float distY = mTarget.mCenterY - (mCenterY + mOffsetY);
-					float dist = (float) Math.sqrt(Math.pow(distX, 2) + Math.pow(distY, 2));
-					
-					// if close enough to targeted waypoint, skip to acquiring next waypoint
-					if (dist < mSpeed) {
-						break;
-					}
-					
-					// otherwise move in direction of targeted waypoint
-					float dX = distX / dist * (float) mSpeed * (float) mSpeedFactor;
-					float dY = distY / dist * (float) mSpeed * (float) mSpeedFactor;
-					move(dX, dY);
-					
-					// then sleep for animation's sake
-					try {
-						Thread.sleep(30);
-					} catch (InterruptedException e) {
-						e.printStackTrace();
+						
+						// calculate distance to targeted waypoint
+						float distX = mTarget.mCenterX - (mCenterX + mOffsetX);
+						float distY = mTarget.mCenterY - (mCenterY + mOffsetY);
+						float dist = (float) Math.sqrt(Math.pow(distX, 2) + Math.pow(distY, 2));
+						
+						// if close enough to targeted waypoint, skip to acquiring next waypoint
+						if (dist < mSpeed) {
+							break;
+						}
+						
+						// otherwise move in direction of targeted waypoint
+						float dX = distX / dist * (float) mSpeed * (float) mSpeedFactor;
+						float dY = distY / dist * (float) mSpeed * (float) mSpeedFactor;
+						move(dX, dY);
+						
+						// then sleep for animation's sake
+						try {
+							Thread.sleep(30);
+						} catch (InterruptedException e) {
+							e.printStackTrace();
+						}
+						
 					}
 					
 				}

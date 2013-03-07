@@ -29,7 +29,6 @@ public abstract class Tower extends Sprite {
 	public String mName;
 	public float mRange;
 	public Sprite mRangeCircle;
-	public int mRound;
 	public int mDelay;
 	public float mDamage;
 	public int mScanMethod;
@@ -72,16 +71,18 @@ public abstract class Tower extends Sprite {
 		public void run() {
 			
 			while (mActive) {
-				mTarget = scan(mScanMethod);
-				if (mTarget != null) {
-					if (mTarget.mState == Enemy.STATE_DEAD) {
-						mTarget = null;
-					} else {
-						if (inRange(mTarget)) {
-							fireRound(mRound);
-							try {Thread.sleep(mDelay);} catch (InterruptedException e) {e.printStackTrace();}
-						} else {
+				if (!TowerDefense.mSceneManager.getCurrentLevel().mPaused) {
+					mTarget = scan(mScanMethod);
+					if (mTarget != null) {
+						if (mTarget.mState == Enemy.STATE_DEAD) {
 							mTarget = null;
+						} else {
+							if (inRange(mTarget)) {
+								fireRound();
+								try {Thread.sleep(mDelay);} catch (InterruptedException e) {e.printStackTrace();}
+							} else {
+								mTarget = null;
+							}
 						}
 					}
 				}
@@ -141,31 +142,8 @@ public abstract class Tower extends Sprite {
 	*/
 	
 	// creates a new round aimed at the current target
-	public void fireRound(int roundCode) {
-		
-		switch (roundCode) {
-		case Round.ROUND_TEST:
-			Round testRound = new TestRound(mTarget, mCenterX + mOffsetX, mCenterY + mOffsetY, getVertexBufferObjectManager());
-			TowerDefense.mSceneManager.getCurrentLevel().attachChild(testRound);
-			break;
-		case Round.ROUND_SLOW:
-			Round slowRound = new SlowRound(mTarget, mCenterX + mOffsetX, mCenterY + mOffsetY, getVertexBufferObjectManager());
-			TowerDefense.mSceneManager.getCurrentLevel().attachChild(slowRound);
-			break;
-		case Round.ROUND_FLAME:
-			Round flameRound = new FlameRound(mTarget, mCenterX + mOffsetX, mCenterY + mOffsetY, getVertexBufferObjectManager());
-			TowerDefense.mSceneManager.getCurrentLevel().attachChild(flameRound);
-			break;
-		case Round.ROUND_FIREBALL:
-			Round fireBallRound = new FireBallRound(mTarget, mCenterX + mOffsetX, mCenterY + mOffsetY, getVertexBufferObjectManager());
-			TowerDefense.mSceneManager.getCurrentLevel().attachChild(fireBallRound);
-			break;
-		case Round.ROUND_PEBBLE:
-			Round pebbleRound = new PebbleRound(mTarget, mCenterX + mOffsetX, mCenterY + mOffsetY, getVertexBufferObjectManager());
-			TowerDefense.mSceneManager.getCurrentLevel().attachChild(pebbleRound);
-			break;
-		}
-		
+	public void fireRound() {
+		// placeholder for subclasses
 	}
 	
 	@Override
@@ -177,11 +155,13 @@ public abstract class Tower extends Sprite {
 	@Override
     public boolean onAreaTouched(TouchEvent pSceneTouchEvent, float pTouchAreaLocalX, float pTouchAreaLocalY) {
         
-		if (pSceneTouchEvent.getAction() == TouchEvent.ACTION_UP) {
-			if (TowerDefense.mSceneManager.getCurrentLevel().mSelectionWheel != null && TowerDefense.mSceneManager.getCurrentLevel().mSelectionWheel.mParent == this) {
-				TowerDefense.mSceneManager.getCurrentLevel().unselect();
-			} else {
-				select();
+		if (!TowerDefense.mSceneManager.getCurrentLevel().mPaused) {
+			if (pSceneTouchEvent.getAction() == TouchEvent.ACTION_UP) {
+				if (TowerDefense.mSceneManager.getCurrentLevel().mSelectionWheel != null && TowerDefense.mSceneManager.getCurrentLevel().mSelectionWheel.mBasePoint == mBasePoint) {
+					TowerDefense.mSceneManager.getCurrentLevel().unselect();
+				} else {
+					select();
+				}
 			}
 		}
         return true;
@@ -197,25 +177,7 @@ public abstract class Tower extends Sprite {
 	
 	public void showSelectionWheel() {
 		if (TowerDefense.mSceneManager.getCurrentLevel().mSelectionWheel != null) TowerDefense.mSceneManager.getCurrentLevel().mSelectionWheel.hide();
-		TowerDefense.mSceneManager.getCurrentLevel().mSelectionWheel = new SelectionWheel(mCenterX, mCenterY + mOffsetY / 2, this, SelectionWheel.TYPE_TOWER, mOptions, getVertexBufferObjectManager());
-	}
-	
-	public void sellTower() {
-		TowerDefense.SOUND_COINS.play();
-		TowerDefense.mSceneManager.getCurrentLevel().mCoins += Math.ceil(mPrice * TowerDefense.SALE_RATIO);
-		destroyTower();
-	}
-	
-	public void destroyTower() {
-		TowerDefense.mSceneManager.getCurrentLevel().unselect();
-		mBasePoint.mCurrentTower = null;
-		setVisible(false);
-		setTag(TowerDefense.TAG_DETACHABLE);
-	}
-	
-	public void upgradeTower(int towerCode) {
-		destroyTower();
-		mBasePoint.buildTower(towerCode);
+		TowerDefense.mSceneManager.getCurrentLevel().mSelectionWheel = new SelectionWheel(mCenterX, mCenterY + mOffsetY / 2, mBasePoint, mOptions, getVertexBufferObjectManager());
 	}
 	
 }
@@ -229,20 +191,17 @@ class TestTower extends Tower {
 	public static final int PRICE = 70;
 	public static final int RANGE = 120;
 	public static final int DELAY = 800;
-	public static final int ROUND = Round.ROUND_TEST;
 	public static final int SCAN_METHOD = SCAN_FIRST;
 	public static final ITextureRegion TEXTURE = TowerDefense.TEXTURE_TOWER_TEST;
 	
+	// constructor
 	public TestTower(BasePoint parent, VertexBufferObjectManager pVertexBufferObjectManager) {
-		
-		// superconstructor
 		super(parent, OFFSET_X, OFFSET_Y, TEXTURE, pVertexBufferObjectManager);
 		
 		// set variables
 		mName = NAME;
 		mRange = RANGE;
 		mDelay = DELAY;
-		mRound = ROUND;
 		mDamage = (float) TestRound.DAMAGE * (1000f / mDelay);
 		mScanMethod = SCAN_METHOD;
 		mPrice = PRICE;
@@ -261,6 +220,12 @@ class TestTower extends Tower {
 		
 	}
 	
+	// super methods
+	public void fireRound() {
+		Round round = new TestRound(mTarget, mCenterX + mOffsetX, mCenterY + mOffsetY, getVertexBufferObjectManager());
+		TowerDefense.mSceneManager.getCurrentLevel().attachChild(round);
+	}
+	
 }
 
 class PebbleTower extends Tower {
@@ -272,20 +237,17 @@ class PebbleTower extends Tower {
 	public static final int PRICE = 140;
 	public static final int RANGE = 120;
 	public static final int DELAY = 200;
-	public static final int ROUND = Round.ROUND_PEBBLE;
 	public static final int SCAN_METHOD = SCAN_FIRST;
 	public static final ITextureRegion TEXTURE = TowerDefense.TEXTURE_TOWER_PEBBLE;
 	
+	// constructor
 	public PebbleTower(BasePoint parent, VertexBufferObjectManager pVertexBufferObjectManager) {
-		
-		// superconstructor
 		super(parent, OFFSET_X, OFFSET_Y, TEXTURE, pVertexBufferObjectManager);
 		
 		// set variables
 		mName = NAME;
 		mRange = RANGE;
 		mDelay = DELAY;
-		mRound = ROUND;
 		mDamage = (float) TestRound.DAMAGE * (1000f / mDelay);
 		mScanMethod = SCAN_METHOD;
 		mPrice = PRICE;
@@ -304,6 +266,12 @@ class PebbleTower extends Tower {
 		
 	}
 	
+	// super methods
+	public void fireRound() {
+		Round round = new PebbleRound(mTarget, mCenterX + mOffsetX, mCenterY + mOffsetY, getVertexBufferObjectManager());
+		TowerDefense.mSceneManager.getCurrentLevel().attachChild(round);
+	}
+	
 }
 
 class SlowTower extends Tower {
@@ -315,20 +283,17 @@ class SlowTower extends Tower {
 	public static final int PRICE = 70;
 	public static final int RANGE = 100;
 	public static final int DELAY = 2000;
-	public static final int ROUND = Round.ROUND_SLOW;
 	public static final int SCAN_METHOD = SCAN_LAST;
 	public static final ITextureRegion TEXTURE = TowerDefense.TEXTURE_TOWER_SLOW;
 	
+	// constructor
 	public SlowTower(BasePoint parent, VertexBufferObjectManager pVertexBufferObjectManager) {
-		
-		// superconstructor
 		super(parent, OFFSET_X, OFFSET_Y, TEXTURE, pVertexBufferObjectManager);
 		
 		// set variables
 		mName = NAME;
 		mRange = RANGE;
 		mDelay = DELAY;
-		mRound = ROUND;
 		mDamage = (float) SlowRound.DAMAGE * (1000f / mDelay);
 		mScanMethod = SCAN_METHOD;
 		mPrice = PRICE;
@@ -347,6 +312,12 @@ class SlowTower extends Tower {
 		
 	}
 	
+	// super methods
+	public void fireRound() {
+		Round round = new SlowRound(mTarget, mCenterX + mOffsetX, mCenterY + mOffsetY, getVertexBufferObjectManager());
+		TowerDefense.mSceneManager.getCurrentLevel().attachChild(round);
+	}
+	
 }
 
 class FireTower extends Tower {
@@ -358,20 +329,17 @@ class FireTower extends Tower {
 	public static final int PRICE = 120;
 	public static final int RANGE = 150;
 	public static final int DELAY = 1500;
-	public static final int ROUND = Round.ROUND_FIREBALL;
 	public static final int SCAN_METHOD = SCAN_FIRST;
 	public static final ITextureRegion TEXTURE = TowerDefense.TEXTURE_TOWER_FIRE;
 	
+	// constructor
 	public FireTower(BasePoint parent, VertexBufferObjectManager pVertexBufferObjectManager) {
-		
-		// superconstructor
 		super(parent, OFFSET_X, OFFSET_Y, TEXTURE, pVertexBufferObjectManager);
 		
 		// set variables
 		mName = NAME;
 		mRange = RANGE;
 		mDelay = DELAY;
-		mRound = ROUND;
 		mDamage = (float) FireBallRound.DAMAGE * (1000f / mDelay);
 		mScanMethod = SCAN_METHOD;
 		mPrice = PRICE;
@@ -390,6 +358,12 @@ class FireTower extends Tower {
 		
 	}
 	
+	// super methods
+	public void fireRound() {
+		Round round = new FireBallRound(mTarget, mCenterX + mOffsetX, mCenterY + mOffsetY, getVertexBufferObjectManager());
+		TowerDefense.mSceneManager.getCurrentLevel().attachChild(round);
+	}
+	
 }
 
 class FlamethrowerTower extends Tower {
@@ -401,20 +375,17 @@ class FlamethrowerTower extends Tower {
 	public static final int PRICE = 180;
 	public static final int RANGE = 100;
 	public static final int DELAY = 5;
-	public static final int ROUND = Round.ROUND_FLAME;
 	public static final int SCAN_METHOD = SCAN_FIRST;
 	public static final ITextureRegion TEXTURE = TowerDefense.TEXTURE_TOWER_FLAMETHROWER;
 	
+	// constructor
 	public FlamethrowerTower(BasePoint parent, VertexBufferObjectManager pVertexBufferObjectManager) {
-		
-		// superconstructor
 		super(parent, OFFSET_X, OFFSET_Y, TEXTURE, pVertexBufferObjectManager);
 		
 		// set variables
 		mName = NAME;
 		mRange = RANGE;
 		mDelay = DELAY;
-		mRound = ROUND;
 		mDamage = (float) FlameRound.DAMAGE * (1000f / mDelay);
 		mScanMethod = SCAN_METHOD;
 		mPrice = PRICE;
@@ -429,6 +400,12 @@ class FlamethrowerTower extends Tower {
 		mRangeCircle.setVisible(false);
 		TowerDefense.mSceneManager.getCurrentLevel().attachChild(mRangeCircle);
 		
+	}
+	
+	// super methods
+	public void fireRound() {
+		Round round = new FlameRound(mTarget, mCenterX + mOffsetX, mCenterY + mOffsetY, getVertexBufferObjectManager());
+		TowerDefense.mSceneManager.getCurrentLevel().attachChild(round);
 	}
 	
 }

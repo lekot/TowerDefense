@@ -82,11 +82,9 @@ public class HUD {
 		
 		// set up the options hud //TODO make OptionsButton and PauseButton classes
 		mOptionsButton = new Sprite(TowerDefense.CAMERA_WIDTH - 20 - TowerDefense.TEXTURE_BUTTON_OPTIONS.getWidth(), 20, TowerDefense.TEXTURE_BUTTON_OPTIONS, pVertexBufferObjectManager);
-		mPauseButton = new Sprite(TowerDefense.CAMERA_WIDTH - 70 - TowerDefense.TEXTURE_BUTTON_PAUSE.getWidth(), 20, TowerDefense.TEXTURE_BUTTON_PAUSE, pVertexBufferObjectManager);
 		mOptionsButton.setZIndex(TowerDefense.ZINDEX_HUD);
-		mPauseButton.setZIndex(TowerDefense.ZINDEX_HUD);
 		TowerDefense.mSceneManager.getCurrentLevel().attachChild(mOptionsButton);
-		TowerDefense.mSceneManager.getCurrentLevel().attachChild(mPauseButton);
+		mPauseButton = new PauseButton(TowerDefense.CAMERA_WIDTH - 86, 38, pVertexBufferObjectManager);
 		
 	}
 	

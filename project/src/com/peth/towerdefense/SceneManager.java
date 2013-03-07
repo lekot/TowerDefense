@@ -2,7 +2,6 @@ package com.peth.towerdefense;
 
 import org.andengine.entity.scene.Scene;
 import org.andengine.opengl.vbo.VertexBufferObjectManager;
-import org.andengine.ui.activity.BaseGameActivity;
 
 public class SceneManager {
 	private static TowerDefense game;

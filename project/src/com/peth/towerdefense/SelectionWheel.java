@@ -1,8 +1,6 @@
 package com.peth.towerdefense;
 
 import java.util.ArrayList;
-
-import org.andengine.entity.Entity;
 import org.andengine.entity.sprite.Sprite;
 import org.andengine.opengl.texture.region.ITextureRegion;
 import org.andengine.opengl.vbo.VertexBufferObjectManager;
@@ -20,12 +18,12 @@ public class SelectionWheel extends Sprite {
 	public float mCenterX;
 	public float mCenterY;
 	public float mRadius = 52; // change this according the texture used
-	public Entity mParent;
+	public BasePoint mBasePoint;
 	public int mSelection = -1;
 	public ArrayList<Option> mOptions;
 	
 	// constructor
-	public SelectionWheel(float x, float y, Entity parent, int type, ArrayList<Integer> optionCodes, VertexBufferObjectManager pVertexBufferObjectManager) {
+	public SelectionWheel(float x, float y, BasePoint basePoint, ArrayList<Integer> optionCodes, VertexBufferObjectManager pVertexBufferObjectManager) {
 		
 		// superconstructor
 		super(x - (TEXTURE.getWidth() / 2), y - (TEXTURE.getHeight() / 2), TEXTURE, pVertexBufferObjectManager);
@@ -34,7 +32,7 @@ public class SelectionWheel extends Sprite {
 		setZIndex(TowerDefense.ZINDEX_HUD);
 		mCenterX = getX() + (TEXTURE.getWidth() / 2);
 		mCenterY = getY() + (TEXTURE.getHeight() / 2);
-		mParent = parent;
+		mBasePoint = basePoint;
 		mOptions = new ArrayList<Option>();
 		
 		// attach
@@ -42,57 +40,36 @@ public class SelectionWheel extends Sprite {
 			
 		// loop through all options
 		for (int i = 0; i < optionCodes.size(); i++) {
+				
+			// determine position
+			double angle = Math.toRadians(((double) 360 / optionCodes.size()) * i - 45);
+			float xPos = (float) (mCenterX + (Math.sin(angle) * mRadius));
+			float yPos = (float) (mCenterY - (Math.cos(angle) * mRadius));
 			
-			// create select options
-			if (type == TYPE_BASE) {
-				
-				// determine position
-				double angle = Math.toRadians(((double) 360 / optionCodes.size()) * i - 45);
-				float xPos = (float) (mCenterX + (Math.sin(angle) * mRadius));
-				float yPos = (float) (mCenterY - (Math.cos(angle) * mRadius));
-				
-				// create options
-				switch (optionCodes.get(i)) {
-				case Option.LOCKED:
-					mOptions.add(new LockedOption(xPos, yPos, mParent, this, getVertexBufferObjectManager()));
-					break;
-				case Option.BUILD_TOWER_TEST:
-					mOptions.add(new TestTowerOption(xPos, yPos, mParent, this, getVertexBufferObjectManager()));
-					break;
-				case Option.BUILD_TOWER_SLOW:
-					mOptions.add(new SlowTowerOption(xPos, yPos, mParent, this, getVertexBufferObjectManager()));
-					break;
-				case Option.BUILD_TOWER_FIRE:
-					mOptions.add(new FireTowerOption(xPos, yPos, mParent, this, getVertexBufferObjectManager()));
-					break;
-				}
-				
-			} else if (type == TYPE_TOWER) {
-				
-				// determine position
-				double angle = Math.toRadians(((double) 360 / optionCodes.size()) * i - 135);
-				float xPos = (float) (mCenterX + (Math.sin(angle) * mRadius));
-				float yPos = (float) (mCenterY - (Math.cos(angle) * mRadius));
-				
-				// create options
-				switch (optionCodes.get(i)) {
-				case Option.LOCKED:
-					mOptions.add(new LockedOption(xPos, yPos, mParent, this, getVertexBufferObjectManager()));
-					break;
-				case Option.SELL_TOWER:
-					mOptions.add(new SellOption(xPos, yPos, mParent, this, getVertexBufferObjectManager()));
-					break;
-				case Option.BUILD_TOWER_FIRE:
-					mOptions.add(new FireTowerOption(xPos, yPos, mParent, this, getVertexBufferObjectManager()));
-					break;
-				case Option.BUILD_TOWER_FLAMETHROWER:
-					mOptions.add(new FlamethrowerTowerOption(xPos, yPos, mParent, this, getVertexBufferObjectManager()));
-					break;
-				case Option.BUILD_TOWER_PEBBLE:
-					mOptions.add(new PebbleTowerOption(xPos, yPos, mParent, this, getVertexBufferObjectManager()));
-					break;
-				}
-				
+			// create option
+			/* TODO FIND A WAY AROUND SWITCH */
+			switch (optionCodes.get(i)) {
+			case Option.LOCKED:
+				mOptions.add(new LockedOption(xPos, yPos, mBasePoint, getVertexBufferObjectManager()));
+				break;
+			case Option.SELL_TOWER:
+				mOptions.add(new SellOption(xPos, yPos, mBasePoint, getVertexBufferObjectManager()));
+				break;
+			case Option.BUILD_TOWER_TEST:
+				mOptions.add(new TestTowerOption(xPos, yPos, mBasePoint, getVertexBufferObjectManager()));
+				break;
+			case Option.BUILD_TOWER_PEBBLE:
+				mOptions.add(new PebbleTowerOption(xPos, yPos, mBasePoint, getVertexBufferObjectManager()));
+				break;
+			case Option.BUILD_TOWER_SLOW:
+				mOptions.add(new SlowTowerOption(xPos, yPos, mBasePoint, getVertexBufferObjectManager()));
+				break;
+			case Option.BUILD_TOWER_FIRE:
+				mOptions.add(new FireTowerOption(xPos, yPos, mBasePoint, getVertexBufferObjectManager()));
+				break;
+			case Option.BUILD_TOWER_FLAMETHROWER:
+				mOptions.add(new FlamethrowerTowerOption(xPos, yPos, mBasePoint, getVertexBufferObjectManager()));
+				break;
 			}
 			
 		}
